@@ -1,4 +1,3 @@
-// src/routes/index.tsx
 import { lazy } from "react";
 
 // Carga diferida del componente Demo

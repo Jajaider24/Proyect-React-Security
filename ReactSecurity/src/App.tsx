@@ -1,4 +1,3 @@
-// src/App.tsx
 import React, { Suspense } from "react";
 import { Routes, Route } from "react-router-dom"; // No necesitas BrowserRouter aquí, solo Routes y Route
 import routes from "./routes/index.ts"; // Importa las rutas definidas en index.tsx
