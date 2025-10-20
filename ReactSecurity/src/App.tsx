@@ -1,17 +1,15 @@
-import React, { Suspense } from "react";
-import { Routes, Route } from "react-router-dom"; // No necesitas BrowserRouter aquí, solo Routes y Route
-import routes from "./routes/index.ts"; // Importa las rutas definidas en index.tsx
+// app.tsx
+import { DashboardLayout } from "./layout/DashboardLayout.tsx";
 
-const App: React.FC = () => {
+export default function App() {
   return (
-    <Suspense fallback={<div>Cargando...</div>}>
-      <Routes>
-        {routes.map((route, index) => (
-          <Route key={index} path={route.path} element={<route.component />} />
-        ))}
-      </Routes>
-    </Suspense>
+    <DashboardLayout onChangeView={(view) => console.log("Cambiar a vista:", view)}>
+      <div className="p-6">
+        <h1 className="text-2xl font-bold">Bienvenido al Dashboard</h1>
+        <p className="text-gray-600 mt-2">
+          Aquí va el contenido principal del sistema.
+        </p>
+      </div>
+    </DashboardLayout>
   );
-};
-
-export default App;
+}
