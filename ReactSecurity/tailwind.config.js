@@ -1,8 +1,14 @@
+/** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./src//*.{js,ts,jsx,tsx,html}"],
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx,html}",
+  ],
   theme: {
     extend: {
-      fontFamily: { arimo: ["Arimo", "sans-serif"] },
+      fontFamily: {
+        arimo: ["Arimo", "sans-serif"],
+      },
       colors: {
         primary: "#071440",
         secondary: "#16275D",

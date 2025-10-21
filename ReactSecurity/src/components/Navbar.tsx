@@ -1,33 +1,54 @@
+// src/components/layout/Header.tsx
+
 interface HeaderProps {
   title: string;
-  onChangeView: (view: "crear" | "listar") => void;
+  onCreate: () => void;
+  onList: () => void;
+  onLogout: () => void;
 }
 
-export function Header({ title, onChangeView }: HeaderProps) {
-
-
+export function Header({ title, onCreate, onList, onLogout }: HeaderProps) {
   return (
     <header className="flex items-center justify-between px-6 py-4 bg-white shadow-md border-b border-gray-200">
       <h1 className="text-2xl font-semibold text-primary">{title}</h1>
+
       <div className="flex items-center gap-3">
-        <button
-          onClick={() => onChangeView("crear")}
-          className="px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-blue-600 transition"
-        >
+        <HeaderButton onClick={onCreate} variant="primary">
           Crear solicitud
-        </button>
-        <button
-          onClick={() => onChangeView("listar")}
-          className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition"
-        >
+        </HeaderButton>
+
+        <HeaderButton onClick={onList} variant="secondary">
           Mis solicitudes
-        </button>
-        <button
-          className="px-4 py-2 rounded-md bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition"
-        >
+        </HeaderButton>
+
+        <HeaderButton onClick={onLogout} variant="danger">
           Cerrar sesión
-        </button>
+        </HeaderButton>
       </div>
     </header>
+  );
+}
+
+// 👇 Componente reutilizable (SRP)
+interface HeaderButtonProps {
+  onClick: () => void;
+  children: React.ReactNode;
+  variant: "primary" | "secondary" | "danger";
+}
+
+function HeaderButton({ onClick, children, variant }: HeaderButtonProps) {
+  const baseStyles =
+    "px-4 py-2 rounded-md text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2";
+
+  const variants = {
+    primary: "bg-primary text-white hover:bg-blue-600 focus:ring-primary",
+    secondary: "bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-400",
+    danger: "bg-red-500 text-white hover:bg-red-600 focus:ring-red-500",
+  };
+
+  return (
+    <button onClick={onClick} className={`${baseStyles} ${variants[variant]}`}>
+      {children}
+    </button>
   );
 }
