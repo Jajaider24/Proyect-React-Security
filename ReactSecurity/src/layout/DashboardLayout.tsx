@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "../components/Navbar.tsx";
 import { Sidebar } from "../components/Sidebar.tsx";
+import userService from "../services/userService.ts";
 
 
 interface DashboardLayoutProps {
@@ -10,6 +12,12 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [view, setView] = useState<"crear" | "listar">("listar");
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    userService.logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <div className="min-h-screen bg-gray5 flex">
@@ -18,7 +26,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Contenedor principal */}
       <div className="flex-1 flex flex-col">
-        <Header title="SG Tickets" onChangeView={setView} />
+  <Header title="SG Tickets" onChangeView={setView} onLogout={handleLogout} />
 
         <main className="p-6 flex-1 overflow-y-auto">
           {view === "crear" ? (

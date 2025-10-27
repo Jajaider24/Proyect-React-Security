@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Loader from "./common/Loader/index.tsx";
 import { DashboardLayout } from "./layout/DashboardLayout.tsx";
 import routes from "./routes/index.ts";
+import ProtectedRoute from "./services/Auth/ProtectedRoute.tsx";
 
 export default function App() {
   return (
@@ -22,9 +23,11 @@ export default function App() {
                 key={r.path}
                 path={r.path}
                 element={
-                  <DashboardLayout>
-                    <Component />
-                  </DashboardLayout>
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Component />
+                    </DashboardLayout>
+                  </ProtectedRoute>
                 }
               />
             );

@@ -1,6 +1,28 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import userService from "../services/userService.ts";
 
 export default function Login() {
+  const navigate = useNavigate();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await userService.login(username, password);
+      // Redirigir al menú/dashboard (ruta ya envuelta en DashboardLayout en App.tsx)
+      navigate("/demo", { replace: true });
+    } catch (err: any) {
+      setError(err?.message || "Error al iniciar sesión");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-6">
@@ -11,6 +33,8 @@ export default function Login() {
           <input
             type="text"
             placeholder="Ingrese su usuario o correo"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary/50 px-3 py-2"
           />
 
@@ -18,18 +42,24 @@ export default function Login() {
           <input
             type="password"
             placeholder="Ingrese su contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary/50 px-3 py-2"
           />
 
+          {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
+
           <button
             type="button"
-            className="mt-4 w-full bg-primary text-white py-2 rounded-md hover:bg-blue-600"
+            onClick={handleSubmit}
+            disabled={loading}
+            className="mt-4 w-full bg-primary text-white py-2 rounded-md hover:bg-blue-600 disabled:opacity-60"
           >
-            Iniciar sesión
+            {loading ? "Iniciando..." : "Iniciar sesión"}
           </button>
         </div>
 
-
+        <div className="space-y-2">
           <button
             type="button"
             className="w-full flex items-center justify-center gap-3 px-4 py-2 border rounded-md hover:bg-gray-50"
@@ -63,6 +93,7 @@ export default function Login() {
             <img src="/Google__G__logo.svg.png" alt="Google" className="w-5 h-5" />
             <span className="text-sm font-medium">Continuar con Google</span>
           </button>
+        </div>
       </div>
     </div>
   );

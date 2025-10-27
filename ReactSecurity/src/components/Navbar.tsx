@@ -2,26 +2,45 @@
 
 interface HeaderProps {
   title: string;
-  onCreate: () => void;
-  onList: () => void;
-  onLogout: () => void;
+  onCreate?: () => void;
+  onList?: () => void;
+  onLogout?: () => void;
+  // Permitir el callback que usa DashboardLayout
+  onChangeView?: (v: "crear" | "listar") => void;
 }
 
-export function Header({ title, onCreate, onList, onLogout }: HeaderProps) {
+export function Header({ title, onCreate, onList, onLogout, onChangeView }: HeaderProps) {
   return (
     <header className="flex items-center justify-between px-6 py-4 bg-white shadow-md border-b border-gray-200">
       <h1 className="text-2xl font-semibold text-primary">{title}</h1>
 
       <div className="flex items-center gap-3">
-        <HeaderButton onClick={onCreate} variant="primary">
+        <HeaderButton
+          onClick={() => {
+            onCreate?.();
+            onChangeView?.("crear");
+          }}
+          variant="primary"
+        >
           Crear solicitud
         </HeaderButton>
 
-        <HeaderButton onClick={onList} variant="secondary">
+        <HeaderButton
+          onClick={() => {
+            onList?.();
+            onChangeView?.("listar");
+          }}
+          variant="secondary"
+        >
           Mis solicitudes
         </HeaderButton>
 
-        <HeaderButton onClick={onLogout} variant="danger">
+        <HeaderButton
+          onClick={() => {
+            onLogout?.();
+          }}
+          variant="danger"
+        >
           Cerrar sesión
         </HeaderButton>
       </div>
