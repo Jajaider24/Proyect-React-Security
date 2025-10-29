@@ -1,3 +1,42 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Dark mode readability overrides
+	 These provide higher-contrast colors for common text classes when
+	 the `dark` class is present on <html>. This is a stop-gap so the
+	 UI is readable immediately; for a long-term solution prefer using
+	 Tailwind's `dark:` variants or semantic utility classes. */
+
+/* Prefer using semantic class `text-primary` across components; this
+	 rule ensures it becomes light in dark mode. */
+.text-primary {
+	color: #071440;
+}
+.dark .text-primary {
+	color: #ffffff;
+}
+
+/* Headings and strong text often use gray-800 / gray-700; make them
+	 lighter in dark mode for contrast. */
+.dark .text-gray-800 {
+	color: #f3f4f6; /* gray-100 */
+}
+.dark .text-gray-700 {
+	color: #e5e7eb; /* gray-200 */
+}
+
+/* Muted text */
+.dark .text-gray-600 {
+	color: #d1d5db; /* gray-300 */
+}
+.dark .text-gray-400 {
+	color: #9ca3af; /* gray-400 */
+}
+
+/* If any panels still use `bg-white` without dark: variant, make them
+	 slightly dark in dark mode for readability. Use !important to
+	 override Tailwind utility when needed. */
+.dark .bg-white {
+	background-color: #111827 !important; /* gray-900 */
+}

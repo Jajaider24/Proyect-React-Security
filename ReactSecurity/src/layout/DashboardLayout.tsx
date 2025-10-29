@@ -26,7 +26,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Contenedor principal */}
       <div className="flex-1 flex flex-col">
-  <Header title="SG Tickets" onChangeView={setView} onLogout={handleLogout} />
+  <Header title="Sistema de Seguridad de Usuarios" onChangeView={setView} onLogout={handleLogout} />
 
         <main className="p-6 flex-1 overflow-y-auto">
           {view === "crear" ? (

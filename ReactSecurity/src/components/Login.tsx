@@ -9,6 +9,16 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const getErrorMessage = (err: unknown) => {
+    if (!err) return "Error al iniciar sesión";
+    if (err instanceof Error) return err.message;
+    try {
+      return String(err);
+    } catch {
+      return "Error al iniciar sesión";
+    }
+  };
+
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
@@ -16,8 +26,8 @@ export default function Login() {
       await userService.login(username, password);
       // Redirigir al menú/dashboard (ruta ya envuelta en DashboardLayout en App.tsx)
       navigate("/demo", { replace: true });
-    } catch (err: any) {
-      setError(err?.message || "Error al iniciar sesión");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

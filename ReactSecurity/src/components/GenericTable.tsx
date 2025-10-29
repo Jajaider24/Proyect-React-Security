@@ -8,6 +8,11 @@ export interface Action {
 interface GenericTableProps<T> {
   data: T[];
   columns: (keyof T | string)[];
+  /**
+   * Optional key to use for each row. If not provided, component will try
+   * to use `item.id` when present, otherwise falls back to the array index.
+   */
+  rowKey?: keyof T | ((item: T) => string | number);
   actions?: Action[];
   onAction?: (name: string, item: T) => void;
 }
@@ -20,6 +25,7 @@ interface GenericTableProps<T> {
 const GenericTable = <T extends Record<string, any>>({
   data,
   columns,
+  rowKey,
   actions = [],
   onAction = () => {},
 }: GenericTableProps<T>) => {
@@ -40,42 +46,53 @@ const GenericTable = <T extends Record<string, any>>({
           </tr>
         </thead>
         <tbody>
-          {data.length === 0 ? (
-            <tr>
-              <td colSpan={columns.length + 1} className="text-center py-5 px-4 text-black dark:text-white">
-                No hay datos disponibles
-              </td>
-            </tr>
-          ) : (
-            data.map((item, index) => (
-              <tr key={index} className="border-b border-stroke dark:border-strokedark">
-                {columns.map((col) => (
-                  <td key={String(col)} className="py-5 px-4 pl-9 xl:pl-11 text-black dark:text-white">
-                    {String((item as any)[col as string] ?? "")}
-                  </td>
-                ))}
-                <td className="py-5 px-4">
-                  <div className="flex items-center space-x-3.5">
-                    {actions.map((action) => {
-                      const isEdit = action.name === "edit";
-                      const isDelete = action.name === "delete";
-
-                      return (
-                        <button
-                          key={action.name}
-                          onClick={() => onAction(action.name, item)}
-                          className={`hover:text-primary ${isDelete ? "text-danger hover:text-red-700" : ""} ${isEdit ? "text-primary" : ""}`}
-                          title={action.label}
-                        >
-                          {action.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+            {data.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length + 1} className="text-center py-5 px-4 text-black dark:text-white">
+                  No hay datos disponibles
                 </td>
               </tr>
-            ))
-          )}
+            ) : (
+              data.map((item, index) => {
+                // compute a stable key: prefer `rowKey`, then item.id, then index
+                let key: string | number = index;
+                if (rowKey) {
+                  if (typeof rowKey === "function") key = rowKey(item);
+                  else key = String((item as any)[String(rowKey)]) || index;
+                } else if ((item as any).id !== undefined) {
+                  key = (item as any).id as string | number;
+                }
+
+                return (
+                  <tr key={String(key)} className="border-b border-stroke dark:border-strokedark">
+                    {columns.map((col) => (
+                      <td key={String(col)} className="py-5 px-4 pl-9 xl:pl-11 text-black dark:text-white">
+                        {String(((item as Record<string, unknown>)[String(col)] as any) ?? "")}
+                      </td>
+                    ))}
+                    <td className="py-5 px-4">
+                      <div className="flex items-center space-x-3.5">
+                        {actions.map((action) => {
+                          const isEdit = action.name === "edit";
+                          const isDelete = action.name === "delete";
+
+                          return (
+                            <button
+                              key={action.name}
+                              onClick={() => onAction(action.name, item)}
+                              className={`hover:text-primary ${isDelete ? "text-danger hover:text-red-700" : ""} ${isEdit ? "text-primary" : ""}`}
+                              title={action.label}
+                            >
+                              {action.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
         </tbody>
       </table>
     </div>

@@ -51,7 +51,9 @@ const Demo: React.FC = () => {
         break;
       }
       default:
-        console.log("Acción no manejada", name, item);
+        // acción no implementada: en producción podríamos enviar a un logger
+        // o mostrar una notificación al usuario. Por ahora no hacemos nada.
+        break;
     }
   };
 
