@@ -14,7 +14,7 @@ export function Sidebar({
     >
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold text-primary dark:text-white">
-          {collapsed ? "👤" : "Mi perfil"}
+          {collapsed ? "👤" : "USUARIO"}
         </h2>
         <button
           onClick={onToggle}

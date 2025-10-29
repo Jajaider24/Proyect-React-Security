@@ -32,12 +32,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {view === "crear" ? (
             <div className="bg-white dark:bg-gray-800 rounded-md shadow-md p-4">
               <h2 className="text-lg font-semibold mb-2 text-primary dark:text-white">Crear Solicitud</h2>
-              <p className="text-gray-600 dark:text-gray-300">Aquí irá el formulario de creación.</p>
+              <p className="text-gray-600 dark:text-gray-300">Formulario de creación.</p>
             </div>
           ) : (
             <div className="bg-white dark:bg-gray-800 rounded-md shadow-md p-4">
               <h2 className="text-lg font-semibold mb-2 text-primary dark:text-white">Mis Solicitudes</h2>
-              <p className="text-gray-600 dark:text-gray-300">Aquí irá la lista de solicitudes.</p>
+              <p className="text-gray-600 dark:text-gray-300">Lista de solicitudes.</p>
             </div>
           )}
 
