@@ -5,6 +5,7 @@ const Demo = lazy(() => import("../pages/Demo.tsx"));
 // Carga diferida del componente Login (UI)
 const Login = lazy(() => import("../components/Login.tsx"));
 
+
 const routes = [
   {
     path: "/demo", // Ruta para acceder al componente Demo
@@ -16,6 +17,7 @@ const routes = [
     title: "Login",
     component: Login,
   },
+
 ];
 
 export default routes;

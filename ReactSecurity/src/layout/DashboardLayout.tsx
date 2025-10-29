@@ -22,7 +22,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-gray5 dark:bg-black2 dark:text-white flex">
       {/* Sidebar */}
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+      <Sidebar
+        collapsed={collapsed}
+        onToggle={() => setCollapsed(!collapsed)}
+        onSelectModel={(name) => navigate(`/models/${name.toLowerCase()}`)}
+      />
 
       {/* Contenedor principal */}
       <div className="flex-1 flex flex-col">

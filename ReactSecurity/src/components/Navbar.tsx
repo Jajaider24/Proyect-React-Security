@@ -46,10 +46,67 @@ export function Header({ title, onCreate, onList, onLogout, onChangeView }: Head
         >
           Cerrar sesión
         </HeaderButton>
+        {/* UI dropdown (Tailwind / Material UI / Bootstrap) */}
+        <UIDropdown />
+
         {/* Theme toggle (simple, SRP: uses useTheme hook) */}
         <ThemeToggle />
       </div>
     </header>
+  );
+}
+
+function UIDropdown() {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    function onDocumentClick(e: MouseEvent) {
+      if (!ref.current) return;
+      if (!ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("click", onDocumentClick);
+    return () => document.removeEventListener("click", onDocumentClick);
+  }, []);
+
+  const items = [
+    { id: "tailwind", label: "Tailwind" },
+    { id: "mui", label: "Material UI" },
+    { id: "bootstrap", label: "Bootstrap" },
+  ];
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:opacity-90 transition-colors focus:outline-none"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title="UI libraries"
+      >
+        UI
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50">
+          <ul className="py-1">
+            {items.map((it) => (
+              <li key={it.id}>
+                <button
+                  onClick={() => {
+                    console.log(`${it.label} clicked (no action)`);
+                    setOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  {it.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
 
