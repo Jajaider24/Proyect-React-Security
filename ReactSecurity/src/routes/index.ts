@@ -4,6 +4,8 @@ import { lazy } from "react";
 const Demo = lazy(() => import("../pages/Demo.tsx"));
 // Carga diferida del componente Login (UI)
 const Login = lazy(() => import("../components/Login.tsx"));
+// Unified model page
+const ModelList = lazy(() => import("../pages/Models/ModelList.tsx"));
 
 
 const routes = [
@@ -17,6 +19,8 @@ const routes = [
     title: "Login",
     component: Login,
   },
+  // Unified model route
+  { path: "/models/:name", title: "Model", component: ModelList },
 
 ];
 

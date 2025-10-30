@@ -1,9 +1,29 @@
 // Servicio simple de usuario para autenticación mock
 // En un proyecto real reemplazar por llamadas HTTP a la API
 
+import { initializeApp } from "firebase/app";
+import { getAuth, GithubAuthProvider, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+
 const TOKEN_KEY = "auth_token";
 
 const fakeDelay = (ms = 500) => new Promise((res) => setTimeout(res, ms));
+
+// NOTE: We initialize Firebase here to keep everything inside `src/` so
+// CRA can import it. In production you'd centralize this config and keep
+// secrets in environment variables.
+const firebaseConfig = {
+	apiKey: "AIzaSyDA7UmElNlXAnPfDHvfJTcWvvh9Vka8jJ8",
+	authDomain: "proyecto-react-5fc5b.firebaseapp.com",
+	projectId: "proyecto-react-5fc5b",
+	storageBucket: "proyecto-react-5fc5b.firebasestorage.app",
+	messagingSenderId: "429402941051",
+	appId: "1:429402941051:web:c28445382064e5bb41e4de",
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+const githubProvider = new GithubAuthProvider();
 
 const userService = {
 	async login(username: string, password: string) {
@@ -37,6 +57,74 @@ const userService = {
 		const token = localStorage.getItem(TOKEN_KEY);
 		// Aquí podrías enviar el token al servidor y verificar su validez
 		return Boolean(token);
+	},
+
+	// Google OAuth usando Firebase (keeps same return shape as your app expects)
+	async loginWithGoogle() {
+		try {
+			const result = await signInWithPopup(auth, googleProvider);
+			const user = result.user;
+
+			const token = await user.getIdToken();
+
+			const formattedResponse = {
+				user: {
+					_id: user.uid,
+					name: user.displayName || "",
+					email: user.email || "",
+					password: "",
+				},
+				token: token,
+			};
+
+			// persist token so other parts of the app that read TOKEN_KEY keep working
+			try {
+				localStorage.setItem(TOKEN_KEY, token);
+			} catch (err) {
+				// eslint-disable-next-line no-console
+				console.warn("Could not persist auth token:", err);
+			}
+
+			return formattedResponse;
+		} catch (error) {
+			// eslint-disable-next-line no-console
+			console.error("Error en login con Google:", error);
+			throw error;
+		}
+	},
+
+	// GitHub OAuth using Firebase
+	async loginWithGitHub() {
+		try {
+			const result = await signInWithPopup(auth, githubProvider);
+			const user = result.user;
+
+			const token = await user.getIdToken();
+
+			const formattedResponse = {
+				user: {
+					_id: user.uid,
+					name: user.displayName || "",
+					email: user.email || "",
+					password: "",
+				},
+				token: token,
+			};
+
+			// persist token so other parts of the app that read TOKEN_KEY keep working
+			try {
+				localStorage.setItem(TOKEN_KEY, token);
+			} catch (err) {
+				// eslint-disable-next-line no-console
+				console.warn("Could not persist auth token:", err);
+			}
+
+			return formattedResponse;
+		} catch (error) {
+			// eslint-disable-next-line no-console
+			console.error("Error en login con GitHub:", error);
+			throw error;
+		}
 	},
 };
 

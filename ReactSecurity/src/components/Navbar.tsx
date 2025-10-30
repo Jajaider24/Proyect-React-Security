@@ -58,27 +58,95 @@ export function Header({ title, onCreate, onList, onLogout, onChangeView }: Head
 
 function UIDropdown() {
   const [open, setOpen] = React.useState(false);
-  const ref = React.useRef<HTMLDivElement | null>(null);
-
-  React.useEffect(() => {
-    function onDocumentClick(e: MouseEvent) {
-      if (!ref.current) return;
-      if (!ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("click", onDocumentClick);
-    return () => document.removeEventListener("click", onDocumentClick);
-  }, []);
-
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+  const buttonRef = React.useRef<HTMLButtonElement | null>(null);
   const items = [
     { id: "tailwind", label: "Tailwind" },
     { id: "mui", label: "Material UI" },
     { id: "bootstrap", label: "Bootstrap" },
   ];
+  const itemRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
+  const [focusIndex, setFocusIndex] = React.useState<number>(-1);
+
+  React.useEffect(() => {
+    function onDocumentClick(e: MouseEvent) {
+      if (!containerRef.current) return;
+      if (!containerRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("click", onDocumentClick);
+    return () => document.removeEventListener("click", onDocumentClick);
+  }, []);
+
+  React.useEffect(() => {
+    if (open) {
+      setFocusIndex(0);
+      // focus first item when menu opens
+      setTimeout(() => {
+        itemRefs.current[0]?.focus();
+      }, 0);
+    } else {
+      setFocusIndex(-1);
+      // return focus to button
+      buttonRef.current?.focus();
+    }
+  }, [open]);
+
+  const onButtonKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setOpen(true);
+    }
+  };
+
+  const onMenuKeyDown = (e: React.KeyboardEvent) => {
+    const max = items.length - 1;
+    if (e.key === "Escape") {
+      setOpen(false);
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const next = focusIndex >= max ? 0 : focusIndex + 1;
+      setFocusIndex(next);
+      itemRefs.current[next]?.focus();
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const prev = focusIndex <= 0 ? max : focusIndex - 1;
+      setFocusIndex(prev);
+      itemRefs.current[prev]?.focus();
+      return;
+    }
+    if (e.key === "Home") {
+      e.preventDefault();
+      setFocusIndex(0);
+      itemRefs.current[0]?.focus();
+      return;
+    }
+    if (e.key === "End") {
+      e.preventDefault();
+      setFocusIndex(max);
+      itemRefs.current[max]?.focus();
+      return;
+    }
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      // trigger current focused item
+      const idx = focusIndex;
+      if (idx >= 0 && itemRefs.current[idx]) {
+        itemRefs.current[idx]?.click();
+      }
+      return;
+    }
+  };
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative" ref={containerRef}>
       <button
+        ref={buttonRef}
         onClick={() => setOpen((o) => !o)}
+        onKeyDown={onButtonKeyDown}
         className="px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:opacity-90 transition-colors focus:outline-none"
         aria-haspopup="menu"
         aria-expanded={open}
@@ -88,15 +156,25 @@ function UIDropdown() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50">
+        <div
+          role="menu"
+          aria-label="UI libraries"
+          onKeyDown={onMenuKeyDown}
+          className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50"
+        >
           <ul className="py-1">
-            {items.map((it) => (
+            {items.map((it, i) => (
               <li key={it.id}>
                 <button
+                  role="menuitem"
+                  ref={((el: HTMLButtonElement | null) => {
+                    itemRefs.current[i] = el;
+                  }) as React.Ref<HTMLButtonElement>}
                   onClick={() => {
                     console.log(`${it.label} clicked (no action)`);
                     setOpen(false);
                   }}
+                  tabIndex={-1}
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   {it.label}

@@ -101,13 +101,43 @@ export default function Login() {
                 <span className="text-sm font-medium">Continuar con Microsoft</span>
               </button>
 
-              <button className="w-full flex items-center justify-center gap-3 px-4 py-2 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-700" aria-label="Continuar con GitHub">
+              <button
+                onClick={async () => {
+                  setLoading(true);
+                  setError(null);
+                  try {
+                    await userService.loginWithGitHub();
+                    navigate("/demo", { replace: true });
+                  } catch (err: unknown) {
+                    setError(getErrorMessage(err));
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-3 px-4 py-2 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+                aria-label="Continuar con GitHub"
+              >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden>
                   <path fillRule="evenodd" clipRule="evenodd" d="M12 .5a12 12 0 00-3.79 23.4c.6.11.82-.26.82-.58v-2.02c-3.34.73-4.04-1.61-4.04-1.61-.55-1.4-1.34-1.77-1.34-1.77-1.09-.75.08-.74.08-.74 1.2.08 1.83 1.24 1.83 1.24 1.07 1.84 2.8 1.31 3.48 1 .11-.78.42-1.31.76-1.61-2.66-.3-5.46-1.33-5.46-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.17 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 016 0c2.3-1.55 3.3-1.23 3.3-1.23.66 1.65.24 2.87.12 3.17.77.84 1.24 1.91 1.24 3.22 0 4.61-2.8 5.62-5.47 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.82.58A12 12 0 0012 .5z" />
                 </svg>
                 <span className="text-sm font-medium">Continuar con GitHub</span>
               </button>
-              <button className="w-full flex items-center justify-center gap-3 px-4 py-2 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-700" aria-label="Continuar con Google">
+              <button
+                onClick={async () => {
+                  setLoading(true);
+                  setError(null);
+                  try {
+                    await userService.loginWithGoogle();
+                    navigate("/demo", { replace: true });
+                  } catch (err: unknown) {
+                    setError(getErrorMessage(err));
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-3 px-4 py-2 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+                aria-label="Continuar con Google"
+              >
                 <img src="/Google__G__logo.svg.png" alt="Google" className="w-5 h-5" />
                 <span className="text-sm font-medium">Continuar con Google</span>
               </button>
