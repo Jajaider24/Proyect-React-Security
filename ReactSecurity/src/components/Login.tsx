@@ -91,7 +91,22 @@ export default function Login() {
             <p className="text-sm text-center text-gray-500 dark:text-gray-400">o continúa con</p>
 
             <div className="mt-4 grid grid-cols-1 gap-3">
-              <button className="w-full flex items-center justify-center gap-3 px-4 py-2 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-700" aria-label="Continuar con Microsoft">
+              <button
+                onClick={async () => {
+                  setLoading(true);
+                  setError(null);
+                  try {
+                    await userService.loginWithMicrosoft();
+                    navigate("/demo", { replace: true });
+                  } catch (err: unknown) {
+                    setError(getErrorMessage(err));
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-3 px-4 py-2 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+                aria-label="Continuar con Microsoft"
+              >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
                   <rect x="3" y="3" width="8" height="8" fill="#F35325" />
                   <rect x="13" y="3" width="8" height="8" fill="#81BC06" />

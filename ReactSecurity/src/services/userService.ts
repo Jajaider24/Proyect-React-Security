@@ -2,7 +2,7 @@
 // En un proyecto real reemplazar por llamadas HTTP a la API
 
 import { initializeApp } from "firebase/app";
-import { getAuth, GithubAuthProvider, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { getAuth, GithubAuthProvider, GoogleAuthProvider, OAuthProvider, signInWithPopup } from "firebase/auth";
 
 const TOKEN_KEY = "auth_token";
 
@@ -24,6 +24,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const githubProvider = new GithubAuthProvider();
+const microsoftProvider = new OAuthProvider("microsoft.com");
 
 const userService = {
 	async login(username: string, password: string) {
@@ -123,6 +124,40 @@ const userService = {
 		} catch (error) {
 			// eslint-disable-next-line no-console
 			console.error("Error en login con GitHub:", error);
+			throw error;
+		}
+	},
+
+	// Microsoft OAuth using Firebase
+	async loginWithMicrosoft() {
+		try {
+			const result = await signInWithPopup(auth, microsoftProvider);
+			const user = result.user;
+
+			const token = await user.getIdToken();
+
+			const formattedResponse = {
+				user: {
+					_id: user.uid,
+					name: user.displayName || "",
+					email: user.email || "",
+					password: "",
+				},
+				token: token,
+			};
+
+			// persist token so other parts of the app that read TOKEN_KEY keep working
+			try {
+				localStorage.setItem(TOKEN_KEY, token);
+			} catch (err) {
+				// eslint-disable-next-line no-console
+				console.warn("Could not persist auth token:", err);
+			}
+
+			return formattedResponse;
+		} catch (error) {
+			// eslint-disable-next-line no-console
+			console.error("Error en login con Microsoft:", error);
 			throw error;
 		}
 	},
