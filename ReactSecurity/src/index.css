@@ -40,3 +40,147 @@
 .dark .bg-white {
 	background-color: #111827 !important; /* gray-900 */
 }
+
+/* --- Custom UI helpers: buttons and small animations --- */
+@keyframes popIn {
+	from {
+		transform: translateY(10px) scale(.995);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0) scale(1);
+		opacity: 1;
+	}
+}
+
+@keyframes spin {
+	to { transform: rotate(360deg); }
+}
+
+.spinner {
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	border: 2px solid rgba(255,255,255,0.18);
+	border-top-color: rgba(255,255,255,0.95);
+	animation: spin 1s linear infinite;
+}
+
+/* SVG spinner style (colored/styled) */
+.svg-spinner {
+	width: 18px;
+	height: 18px;
+	display: inline-block;
+	vertical-align: middle;
+	animation: spin 1s linear infinite;
+}
+.svg-spinner circle {
+	stroke-linecap: round;
+	stroke-width: 2.4;
+}
+
+/* Top progress bar (indeterminate) */
+.progress-wrap {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 4px;
+	overflow: hidden;
+	border-top-left-radius: 8px;
+	border-top-right-radius: 8px;
+}
+.progress-bar {
+	height: 100%;
+	width: 0%;
+	background: linear-gradient(90deg, rgba(255,255,255,0.95), rgba(255,255,255,0.6));
+	box-shadow: 0 6px 18px rgba(255,255,255,0.06);
+	transform-origin: left center;
+	animation: progressGrow 1.4s cubic-bezier(.2,.9,.2,1) infinite;
+}
+@keyframes progressGrow {
+	0% { width: 6%; opacity: .9 }
+	30% { width: 40%; opacity: .95 }
+	60% { width: 75%; opacity: .95 }
+	100% { width: 100%; opacity: .0 }
+}
+
+/* Toast success style matching login theme (indigo -> pink) */
+.toast-success {
+	background: linear-gradient(90deg, #7c3aed 0%, #ec4899 100%);
+	color: #ffffff;
+	box-shadow: 0 12px 40px rgba(124,58,237,0.18);
+	border: 1px solid rgba(255,255,255,0.06);
+}
+.toast-success .subtext {
+	opacity: .95;
+	color: rgba(255,255,255,0.92);
+}
+
+.fade-in {
+	animation: popIn 360ms cubic-bezier(.2,.9,.2,1) both;
+}
+
+.btn-primary {
+	background-image: linear-gradient(90deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06));
+	backdrop-filter: blur(6px);
+	border: 1px solid rgba(255,255,255,0.12);
+	box-shadow: 0 8px 30px rgba(12, 12, 30, 0.45);
+	transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+.btn-primary:hover {
+	transform: translateY(-3px) scale(1.02);
+	box-shadow: 0 18px 48px rgba(12,12,30,0.6);
+	background-image: linear-gradient(90deg, rgba(255,255,255,0.26), rgba(255,255,255,0.09));
+	border-color: rgba(255,255,255,0.18);
+}
+.btn-primary:active {
+	transform: translateY(0) scale(.995);
+}
+.btn-primary:focus-visible {
+	outline: 2px solid rgba(255,255,255,0.18);
+	outline-offset: 2px;
+}
+
+.btn-social {
+	background: rgba(255,255,255,0.04);
+	border: 1px solid rgba(255,255,255,0.06);
+	transition: background .12s ease, transform .12s ease;
+}
+.btn-social:hover {
+	background: rgba(255,255,255,0.09);
+	transform: translateY(-2px) scale(1.01);
+	box-shadow: 0 8px 24px rgba(12,12,30,0.35);
+	border-color: rgba(255,255,255,0.14);
+}
+.btn-social:active {
+	transform: translateY(0) scale(.995);
+}
+.btn-social:focus-visible {
+	outline: 2px solid rgba(255,255,255,0.08);
+	outline-offset: 2px;
+}
+
+.btn-icon {
+	display: inline-flex;
+	align-items: center;
+	gap: .5rem;
+}
+
+.btn-primary .icon {
+	width: 18px;
+	height: 18px;
+	opacity: .95;
+	transition: transform .12s ease, opacity .12s ease, filter .12s ease;
+}
+.btn-primary:hover .icon {
+	transform: translateY(-1px) scale(1.02);
+	filter: drop-shadow(0 4px 10px rgba(255,255,255,0.06));
+}
+.btn-social img, .btn-social svg {
+	transition: transform .12s ease, opacity .12s ease, filter .12s ease;
+}
+.btn-social:hover img, .btn-social:hover svg {
+	transform: translateY(-1px) scale(1.02);
+	filter: brightness(1.06) saturate(1.05);
+}

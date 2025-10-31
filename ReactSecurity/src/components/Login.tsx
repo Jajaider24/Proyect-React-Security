@@ -45,10 +45,10 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 px-4 py-12">
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
         {/* Left: illustration / branding */}
-        <div className="hidden md:flex flex-col items-start justify-center p-8 bg-gradient-to-br from-primary/90 to-secondary/80 rounded-lg text-white shadow-lg">
+        <div className="hidden md:flex flex-col items-start justify-center p-8 rounded-lg text-white shadow-lg bg-white/5 backdrop-blur-sm border border-white/10">
           <h2 className="text-3xl font-bold mb-2">¡Bienvenido Felipe Buitrago!</h2>
           <p className="mb-6 opacity-90">Accede a tu panel de control y gestiona la seguridad de tus usuarios fácilmente.</p>
           <ul className="space-y-2 text-sm opacity-95">
@@ -58,48 +58,71 @@ export default function Login() {
           </ul>
         </div>
 
-        {/* Right: form */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
-          <h3 className="text-2xl font-semibold text-center mb-4 text-gray-900 dark:text-white">Iniciar sesión</h3>
+        {/* Right: form (glass card, no white bg) */}
+        <div className="relative rounded-lg p-8 bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/20 shadow-xl fade-in">
+          {/* top progress indicator while loading */}
+          {loading && (
+            <div className="progress-wrap" aria-hidden>
+              <div className="progress-bar" />
+            </div>
+          )}
+          <h3 className="text-2xl font-semibold text-center mb-4 text-white">Iniciar sesión</h3>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Usuario o correo</label>
+              <label className="block text-sm font-medium text-white/90">Usuario o correo</label>
               <input
                 type="text"
                 placeholder="usuario@ejemplo.com"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="mt-1 block w-full rounded-md border border-transparent bg-white/10 text-white placeholder-white/70 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white/30"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Contraseña</label>
+              <label className="block text-sm font-medium text-white/90">Contraseña</label>
               <input
                 type="password"
                 placeholder="********"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="mt-1 block w-full rounded-md border border-transparent bg-white/10 text-white placeholder-white/70 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white/30"
                 required
               />
             </div>
 
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {error && <p className="text-sm text-red-300">{error}</p>}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-700 disabled:opacity-60"
+              aria-busy={loading}
+              className="w-full inline-flex items-center justify-center gap-3 px-4 py-2 text-white rounded-md btn-primary btn-icon disabled:opacity-60"
             >
-              {loading ? "Iniciando..." : "Iniciar sesión"}
+              {loading ? (
+                <svg className="svg-spinner" viewBox="0 0 24 24" aria-hidden>
+                  <defs>
+                    <linearGradient id="g1" x1="0%" x2="100%">
+                      <stop offset="0%" stopColor="#fff" stopOpacity="0.95" />
+                      <stop offset="100%" stopColor="#ffd1f0" stopOpacity="0.9" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="12" cy="12" r="8" stroke="url(#g1)" strokeDasharray="40" strokeDashoffset="10" fill="none" />
+                </svg>
+              ) : (
+                <svg className="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                  <path d="M12 1a4 4 0 00-4 4v3H6a2 2 0 00-2 2v7a2 2 0 002 2h12a2 2 0 002-2v-7a2 2 0 00-2-2h-2V5a4 4 0 00-4-4z" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+
+              <span className="font-medium">{loading ? "Iniciando..." : "Iniciar sesión"}</span>
             </button>
           </form>
 
           <div className="mt-6">
-            <p className="text-sm text-center text-gray-500 dark:text-gray-400">o continúa con</p>
+            <p className="text-sm text-center text-white/80">o continúa con</p>
 
             <div className="mt-4 grid grid-cols-1 gap-3">
               <button
@@ -117,7 +140,7 @@ export default function Login() {
                     setLoading(false);
                   }
                 }}
-                className="w-full flex items-center justify-center gap-3 px-4 py-2 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="w-full flex items-center justify-center gap-3 px-4 py-2 border border-white/20 rounded-md btn-social text-white transition"
                 aria-label="Continuar con Microsoft"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
@@ -144,7 +167,7 @@ export default function Login() {
                     setLoading(false);
                   }
                 }}
-                className="w-full flex items-center justify-center gap-3 px-4 py-2 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="w-full flex items-center justify-center gap-3 px-4 py-2 border border-white/20 rounded-md btn-social text-white transition"
                 aria-label="Continuar con GitHub"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden>
@@ -167,7 +190,7 @@ export default function Login() {
                     setLoading(false);
                   }
                 }}
-                className="w-full flex items-center justify-center gap-3 px-4 py-2 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="w-full flex items-center justify-center gap-3 px-4 py-2 border border-white/20 rounded-md btn-social text-white transition"
                 aria-label="Continuar con Google"
               >
                 <img src="/Google__G__logo.svg.png" alt="Google" className="w-5 h-5" />
@@ -177,6 +200,7 @@ export default function Login() {
           </div>
         </div>
       </div>
+
       {/* Toast (top centered, larger) */}
       <div aria-live="polite" className="fixed inset-0 pointer-events-none z-50">
         <div className="flex items-start justify-center pt-6 px-4">
@@ -185,13 +209,13 @@ export default function Login() {
               toast.show ? "opacity-100 -translate-y-0" : "opacity-0 -translate-y-6"
             }`}
           >
-            <div className="flex items-center gap-3 max-w-md w-full bg-green-600 text-white px-6 py-3 rounded-lg shadow-2xl ring-1 ring-black/10">
+            <div className="flex items-center gap-3 max-w-md w-full toast-success px-6 py-3 rounded-lg shadow-2xl ring-1 ring-black/10">
               <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                 <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
               <div className="text-left">
                 <div className="text-lg font-semibold">{toast.message}</div>
-                <div className="text-sm opacity-90">Has iniciado sesión correctamente.</div>
+                <div className="text-sm subtext">Has iniciado sesión correctamente.</div>
               </div>
             </div>
           </div>
