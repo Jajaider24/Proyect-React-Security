@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import userService from "../services/userService.ts";
 
@@ -8,6 +8,14 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ show: boolean; message: string }>({ show: false, message: "" });
+
+  // Auto-hide toast after a short delay
+  useEffect(() => {
+    if (!toast.show) return;
+    const t = setTimeout(() => setToast({ show: false, message: "" }), 2500);
+    return () => clearTimeout(t);
+  }, [toast.show]);
 
   const getErrorMessage = (err: unknown) => {
     if (!err) return "Error al iniciar sesión";
@@ -25,6 +33,9 @@ export default function Login() {
     setError(null);
     try {
       await userService.login(username, password);
+      // show success toast then navigate so user sees confirmation
+      setToast({ show: true, message: "Inicio de sesión exitoso" });
+      await new Promise((res) => setTimeout(res, 700));
       navigate("/demo", { replace: true });
     } catch (err: unknown) {
       setError(getErrorMessage(err));
@@ -97,6 +108,8 @@ export default function Login() {
                   setError(null);
                   try {
                     await userService.loginWithMicrosoft();
+                    setToast({ show: true, message: "Inicio de sesión exitoso" });
+                    await new Promise((res) => setTimeout(res, 700));
                     navigate("/demo", { replace: true });
                   } catch (err: unknown) {
                     setError(getErrorMessage(err));
@@ -122,6 +135,8 @@ export default function Login() {
                   setError(null);
                   try {
                     await userService.loginWithGitHub();
+                    setToast({ show: true, message: "Inicio de sesión exitoso" });
+                    await new Promise((res) => setTimeout(res, 700));
                     navigate("/demo", { replace: true });
                   } catch (err: unknown) {
                     setError(getErrorMessage(err));
@@ -143,6 +158,8 @@ export default function Login() {
                   setError(null);
                   try {
                     await userService.loginWithGoogle();
+                    setToast({ show: true, message: "Inicio de sesión exitoso" });
+                    await new Promise((res) => setTimeout(res, 700));
                     navigate("/demo", { replace: true });
                   } catch (err: unknown) {
                     setError(getErrorMessage(err));
@@ -156,6 +173,26 @@ export default function Login() {
                 <img src="/Google__G__logo.svg.png" alt="Google" className="w-5 h-5" />
                 <span className="text-sm font-medium">Continuar con Google</span>
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Toast (top centered, larger) */}
+      <div aria-live="polite" className="fixed inset-0 pointer-events-none z-50">
+        <div className="flex items-start justify-center pt-6 px-4">
+          <div
+            className={`pointer-events-auto transform transition-all duration-300 ease-out ${
+              toast.show ? "opacity-100 -translate-y-0" : "opacity-0 -translate-y-6"
+            }`}
+          >
+            <div className="flex items-center gap-3 max-w-md w-full bg-green-600 text-white px-6 py-3 rounded-lg shadow-2xl ring-1 ring-black/10">
+              <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <div className="text-left">
+                <div className="text-lg font-semibold">{toast.message}</div>
+                <div className="text-sm opacity-90">Has iniciado sesión correctamente.</div>
+              </div>
             </div>
           </div>
         </div>
