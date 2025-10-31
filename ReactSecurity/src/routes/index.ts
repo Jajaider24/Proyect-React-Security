@@ -6,6 +6,10 @@ const Demo = lazy(() => import("../pages/Demo.tsx"));
 const Login = lazy(() => import("../components/Login.tsx"));
 // Unified model page
 const ModelList = lazy(() => import("../pages/Models/ModelList.tsx"));
+// Pages for Users, Roles, Permissions
+const UsersList = lazy(() => import("../pages/Users/UsersList.tsx"));
+const RolesList = lazy(() => import("../pages/Roles/RolesList.tsx"));
+const PermissionList = lazy(() => import("../pages/Permissions/PermissionList.tsx"));
 
 
 const routes = [
@@ -21,6 +25,11 @@ const routes = [
   },
   // Unified model route
   { path: "/models/:name", title: "Model", component: ModelList },
+
+  // Security main routes
+  { path: "/users", title: "Users", component: UsersList },
+  { path: "/roles", title: "Roles", component: RolesList },
+  { path: "/permissions", title: "Permissions", component: PermissionList },
 
 ];
 

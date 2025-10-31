@@ -25,7 +25,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <Sidebar
         collapsed={collapsed}
         onToggle={() => setCollapsed(!collapsed)}
-        onSelectModel={(name) => navigate(`/models/${name.toLowerCase()}`)}
+        onSelectModel={(routeOrName) => {
+          // If Sidebar passes a route (starts with '/'), navigate directly.
+          if (routeOrName && routeOrName.startsWith("/")) {
+            navigate(routeOrName);
+          } else {
+            navigate(`/models/${routeOrName?.toLowerCase()}`);
+          }
+        }}
       />
 
       {/* Contenedor principal */}

@@ -1,5 +1,5 @@
 import React from "react";
-import { useLocation } from "react-router-dom";
+import SidebarItem from "./SidebarItem.tsx";
 
 export function Sidebar({
   collapsed,
@@ -8,35 +8,17 @@ export function Sidebar({
 }: {
   collapsed: boolean;
   onToggle: () => void;
-  onSelectModel?: (modelName: string) => void;
+  // now the sidebar will pass route paths (e.g. '/users') to the parent
+  onSelectModel?: (route: string) => void;
 }) {
-  // Lista de modelos basada en los archivos de src/models (sin extensión)
-  const models = [
-    "Address",
-    "Answer",
-    "Device",
-    "DigitalSignature",
-    "Password",
-    "Permission",
-    "Profile",
-    "Role",
-    "RolePermission",
-    "SecurityQuestion",
-    "Session",
-    "User",
-    "UserRole",
+  const items = [
+    { label: "Users", route: "/users" },
+    { label: "Roles", route: "/roles" },
+    { label: "Permissions", route: "/permissions" },
   ];
 
-  const location = useLocation();
-
-  const handleModelClick = (name: string) => {
-    if (onSelectModel) onSelectModel(name);
-    else console.log("Modelo seleccionado:", name);
-  };
-
-  const isModelActive = (name: string) => {
-    const path = location.pathname.toLowerCase();
-    return path.includes(`/models/${name.toLowerCase()}`);
+  const handleClick = (route: string) => {
+    if (onSelectModel) onSelectModel(route);
   };
 
   return (
@@ -47,7 +29,7 @@ export function Sidebar({
     >
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold text-primary dark:text-white">
-          {collapsed ? "�" : "MODELOS"}
+          {collapsed ? "S" : "SECURITY"}
         </h2>
         <button
           onClick={onToggle}
@@ -60,31 +42,15 @@ export function Sidebar({
 
       <div className="flex-1 overflow-y-auto">
         <nav className="space-y-2">
-          {models.map((m) => {
-            const active = isModelActive(m);
-            return (
-              <button
-                key={m}
-                onClick={() => handleModelClick(m)}
-                title={m}
-                className={`flex items-center w-full text-left px-3 py-2 rounded transition-colors text-sm focus:outline-none ${
-                  collapsed ? "justify-center" : "justify-start"
-                } ${
-                  active
-                    ? "bg-primary text-white dark:bg-primary"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-100"
-                }`}
-                aria-current={active ? "page" : undefined}
-              >
-                {/* Cuando está colapsado mostramos sólo la inicial */}
-                <span className="font-medium">
-                  {collapsed ? m.charAt(0) : m}
-                </span>
-              </button>
-            );
-          })}
-
-          {/* (UI buttons moved to Navbar as a dropdown) */}
+          {items.map((it) => (
+            <SidebarItem
+              key={it.route}
+              id={`sidebar-${it.label.toLowerCase()}`}
+              label={it.label}
+              collapsed={collapsed}
+              onClick={() => handleClick(it.route)}
+            />
+          ))}
         </nav>
       </div>
 

@@ -1,30 +1,12 @@
 // Servicio simple de usuario para autenticación mock
 // En un proyecto real reemplazar por llamadas HTTP a la API
 
-import { initializeApp } from "firebase/app";
-import { getAuth, GithubAuthProvider, GoogleAuthProvider, OAuthProvider, signInWithPopup } from "firebase/auth";
+import { signInWithPopup } from "firebase/auth";
+import { auth, githubProvider, googleProvider, microsoftProvider } from "../firebaseConfig.ts";
 
 const TOKEN_KEY = "auth_token";
 
 const fakeDelay = (ms = 500) => new Promise((res) => setTimeout(res, ms));
-
-// NOTE: We initialize Firebase here to keep everything inside `src/` so
-// CRA can import it. In production you'd centralize this config and keep
-// secrets in environment variables.
-const firebaseConfig = {
-	apiKey: "AIzaSyDA7UmElNlXAnPfDHvfJTcWvvh9Vka8jJ8",
-	authDomain: "proyecto-react-5fc5b.firebaseapp.com",
-	projectId: "proyecto-react-5fc5b",
-	storageBucket: "proyecto-react-5fc5b.firebasestorage.app",
-	messagingSenderId: "429402941051",
-	appId: "1:429402941051:web:c28445382064e5bb41e4de",
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
-const githubProvider = new GithubAuthProvider();
-const microsoftProvider = new OAuthProvider("microsoft.com");
 
 const userService = {
 	async login(username: string, password: string) {
