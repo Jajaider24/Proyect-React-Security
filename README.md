@@ -57,6 +57,12 @@ Paso : Usar "npm install firebase" Para los logins
 
 Paso : Instalar tambien "npm install -g firebase-tools"
 
+Paso: Instalar: npm i sweetalert2 
+
+Paso: Instalar: "npm install @reduxjs/toolkit react-redux -s"
+                "npm install -D @types/react-redux -s"
+                
+
 #Este proyecto se ejecuta de la siguiente manera:
 cd .\ReactSecurity
 npm start
