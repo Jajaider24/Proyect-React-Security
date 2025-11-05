@@ -9,8 +9,15 @@ import { userRoleService } from "./userRolesService.ts";
  */
 class UserService {
   async getUsers(): Promise<User[]> {
-    const res = await api.get("/api/users/");
-    return res.data;
+    try {
+      const res = await api.get("/api/users/");
+      return res.data;
+    } catch (err: any) {
+      // Network error (backend down / CORS / refused) should not crash the UI.
+      // Log for debugging and return an empty list so the page stays usable.
+      console.warn("UserService.getUsers network error, returning empty list:", err?.message || err);
+      return [];
+    }
   }
 
   async getUserById(id: number): Promise<User> {
@@ -20,17 +27,32 @@ class UserService {
 
   async createUser(payload: Partial<User>): Promise<User> {
     // Usa ruta con slash final para evitar redirects 308 en POST
-    const res = await api.post("/api/users/", payload);
-    return res.data;
+    try {
+      const res = await api.post("/api/users/", payload);
+      return res.data;
+    } catch (err: any) {
+      console.warn("UserService.createUser network error:", err?.message || err);
+      throw err;
+    }
   }
 
   async updateUser(id: number, payload: Partial<User>): Promise<User> {
-    const res = await api.put(`/api/users/${id}`, payload);
-    return res.data;
+    try {
+      const res = await api.put(`/api/users/${id}`, payload);
+      return res.data;
+    } catch (err: any) {
+      console.warn("UserService.updateUser network error:", err?.message || err);
+      throw err;
+    }
   }
 
   async deleteUser(id: number): Promise<void> {
-    await api.delete(`/api/users/${id}`);
+    try {
+      await api.delete(`/api/users/${id}`);
+    } catch (err: any) {
+      console.warn("UserService.deleteUser network error:", err?.message || err);
+      throw err;
+    }
   }
 
   /**
