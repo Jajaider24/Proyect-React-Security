@@ -1,9 +1,9 @@
-import api from "../interceptors/axiosInterceptor";
+import api from "../interceptors/axiosInterceptor.ts";
 import { Address } from "../models/Address"; // ✅ el modelo viene de models, no se define aquí
 
 class AddressService {
   async getAddresses(): Promise<Address[]> {
-    const res = await api.get("/api/addresses");
+    const res = await api.get("/api/addresses/");
     return res.data;
   }
 
@@ -13,8 +13,19 @@ class AddressService {
   }
 
   async getAddressesByUser(userId: number): Promise<Address[]> {
-    const res = await api.get(`/api/addresses/user/${userId}`);
-    return res.data;
+    try {
+      const res = await api.get(`/api/addresses/user/${userId}`);
+      // Backend devuelve un único objeto o 404; normalizamos a lista
+      const data = res.data;
+      if (Array.isArray(data)) return data;
+      return data ? [data] : [];
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        // No address for this user → devolver lista vacía en vez de lanzar error
+        return [];
+      }
+      throw err;
+    }
   }
 
   async createAddress(userId: number, payload: Partial<Address>): Promise<Address> {

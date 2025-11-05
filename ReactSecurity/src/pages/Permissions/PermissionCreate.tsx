@@ -1,52 +1,107 @@
 import React, { useEffect, useState } from "react";
 import Swal from "sweetalert2";
-import { permissionService } from "../../services/permissionService.ts";
+import { permissionService, type Permission } from "../../services/permissionService.ts";
 import { useNavigate } from "react-router-dom";
 
 const CreatePermission: React.FC = () => {
   const navigate = useNavigate();
-  const [template, setTemplate] = useState<any | null>(null);
+  const [form, setForm] = useState<Permission>({ url: "/", method: "GET", entity: "" });
+  const [saving, setSaving] = useState(false);
 
-  // Cargar estructura inicial del permiso
   useEffect(() => {
-    setTemplate({
-      url: "/",
-      method: "GET",  // Valor por defecto válido
-    });
+    // opcional: presets
   }, []);
 
-  const handleCreate = async (values: any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setForm((p) => ({ ...p, [name]: value } as Permission));
+  };
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
-      console.log("Creando permiso:", JSON.stringify(values, null, 2));
-      
-      // Validación local
-      if (!values.url || !values.method) {
-        throw new Error("La URL y el método son requeridos");
+      if (!form.url?.trim() || !form.method?.trim() || !form.entity?.trim()) {
+        throw new Error("URL, Método y Entidad son requeridos");
       }
-      
-      await permissionService.createPermission(values);
+      setSaving(true);
+      await permissionService.createPermission({
+        url: form.url.trim(),
+        method: form.method.toUpperCase() as any,
+        entity: form.entity.trim(),
+      });
       await Swal.fire({
         title: "Permiso creado",
         text: "El permiso se ha creado correctamente",
         icon: "success",
-        timer: 1500,
+        timer: 1400,
         showConfirmButton: false,
       });
-      navigate("/permissions/list");
+      navigate("/permissions");
     } catch (error: any) {
-      console.error("Error creando permiso:", error);
-      Swal.fire(
-        "Error",
-        error?.response?.data?.error || "No fue posible crear el permiso",
-        "error"
-      );
+      const message = error?.response?.data?.error || error?.message || "No fue posible crear el permiso";
+      Swal.fire("Error", message, "error");
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (!template) return <div>Cargando...</div>;
-
-  
-
-  }
+  return (
+    <div className="max-w-xl">
+      <h2 className="text-xl font-semibold mb-4 text-black dark:text-white">Crear Permiso</h2>
+      <form onSubmit={handleCreate} className="space-y-4">
+        <div>
+          <label className="block text-sm text-black mb-1 dark:text-white">URL</label>
+          <input
+            name="url"
+            value={form.url}
+            onChange={handleChange}
+            className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white"
+            placeholder="/api/users"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-black mb-1 dark:text-white">Entidad</label>
+          <input
+            name="entity"
+            value={form.entity}
+            onChange={handleChange}
+            className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white"
+            placeholder="users"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-black mb-1 dark:text-white">Método</label>
+          <select
+            name="method"
+            value={form.method}
+            onChange={handleChange}
+            className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white"
+          >
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="DELETE">DELETE</option>
+          </select>
+        </div>
+        <div className="flex justify-end gap-3 pt-2">
+          <button
+            type="button"
+            className="rounded-md border border-stroke py-2 px-4 text-black hover:bg-gray-100 dark:border-strokedark dark:text-white"
+            onClick={() => navigate("/permissions")}
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60"
+          >
+            {saving ? "Guardando..." : "Guardar"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
 
 export default CreatePermission;

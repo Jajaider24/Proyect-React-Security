@@ -1,9 +1,10 @@
-import api from "../lib/http";
+import api from "../interceptors/axiosInterceptor.ts";
 import { Role } from "../models/Role";
 
 class RoleService {
   async getRoles(): Promise<Role[]> {
-    const res = await api.get("/api/roles");
+    // Backend defines the collection route with a trailing slash. Avoid redirects.
+    const res = await api.get("/api/roles/");
     return res.data;
   }
 
@@ -13,7 +14,8 @@ class RoleService {
   }
 
   async createRole(payload: Partial<Role>): Promise<Role> {
-    const res = await api.post("/api/roles", payload);
+    // Use trailing slash to match Flask blueprint and prevent 308 redirect on POST
+    const res = await api.post("/api/roles/", payload);
     return res.data;
   }
 

@@ -1,9 +1,9 @@
-import api from "../interceptors/axiosInterceptor";
+import api from "../interceptors/axiosInterceptor.ts";
 import { Password } from "../models/Password";
 
 class PasswordService {
   async getPasswords(): Promise<Password[]> {
-    const res = await api.get("/api/passwords");
+    const res = await api.get("/api/passwords/");
     return res.data;
   }
 

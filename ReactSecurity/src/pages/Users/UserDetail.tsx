@@ -1,0 +1,930 @@
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import Swal from "sweetalert2";
+import { getErrorMessage } from "../../lib/errors.ts";
+import { addressService } from "../../services/addressService.ts";
+import { profileService } from "../../services/profileService.ts";
+import { digitalSignatureService } from "../../services/digitalSignatureService.ts";
+import type { Address } from "../../models/Address.ts";
+import type { Profile } from "../../models/Profile.ts";
+import type { Device } from "../../models/Device";
+import type { Password } from "../../models/Password";
+import type { Session } from "../../models/Session";
+import { deviceService } from "../../services/deviceService.ts";
+import { passwordService } from "../../services/passwordService.ts";
+import { sessionService } from "../../services/sessionService.ts";
+import { roleService } from "../../services/roleService.ts";
+import { userRoleService } from "../../services/userRolesService.ts";
+import { securityQuestionService } from "../../services/securityQuestionService.ts";
+import { answerService } from "../../services/answerService.ts";
+
+type TabKey = "address" | "profile" | "signature" | "devices" | "passwords" | "sessions" | "roles" | "questions";
+
+export default function UserDetail() {
+  const { id } = useParams<{ id: string }>();
+  const userId = Number(id);
+  const navigate = useNavigate();
+
+  const [active, setActive] = useState<TabKey>("address");
+
+  useEffect(() => {
+    if (!userId) {
+      Swal.fire("Error", "ID de usuario inválido", "error");
+      navigate("/users");
+    }
+  }, [userId, navigate]);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-black dark:text-white">Usuario #{userId}</h1>
+        <button onClick={() => navigate("/users")} className="rounded-md border border-stroke py-2 px-4 text-black hover:bg-gray-100 dark:border-strokedark dark:text-white">
+          Volver
+        </button>
+      </div>
+
+      <div className="border-b border-stroke dark:border-strokedark">
+        <nav className="-mb-px flex flex-wrap gap-4">
+          {[
+            { key: "address", label: "Address" },
+            { key: "profile", label: "Profile" },
+            { key: "signature", label: "Digital Signature" },
+            { key: "devices", label: "Devices" },
+            { key: "passwords", label: "Passwords" },
+            { key: "sessions", label: "Sessions" },
+            { key: "roles", label: "Roles" },
+            { key: "questions", label: "Security Q&A" },
+          ].map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setActive(t.key as TabKey)}
+              className={`pb-2 border-b-2 ${active === t.key ? "border-primary text-primary" : "border-transparent text-black dark:text-white"}`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {active === "address" && <AddressTab userId={userId} />} 
+      {active === "profile" && <ProfileTab userId={userId} />} 
+      {active === "signature" && <SignatureTab userId={userId} />} 
+      {active === "devices" && <DevicesTab userId={userId} />} 
+      {active === "passwords" && <PasswordsTab userId={userId} />} 
+      {active === "sessions" && <SessionsTab userId={userId} />} 
+  {active === "roles" && <RolesTab userId={userId} />}
+  {active === "questions" && <SecurityAnswersTab userId={userId} />}
+    </div>
+  );
+}
+
+function SecurityAnswersTab({ userId }: { userId: number }) {
+  const [loading, setLoading] = useState(true);
+  const [savingId, setSavingId] = useState<number | null>(null);
+  const [questions, setQuestions] = useState<Array<{ id: number; name: string; description?: string }>>([]);
+  const [answersByQ, setAnswersByQ] = useState<Record<number, { id?: number; content: string }>>({});
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const [qs, ans] = await Promise.all([
+          securityQuestionService.getAll(),
+          answerService.getByUser(userId),
+        ]);
+        const compactQ = (qs || []).filter((q: any) => q?.id != null && q?.name != null).map((q: any) => ({ id: Number(q.id), name: String(q.name), description: q.description || "" }));
+        setQuestions(compactQ);
+        const map: Record<number, { id?: number; content: string }> = {};
+        (ans || []).forEach((a: any) => {
+          const qid = Number(a.security_question_id);
+          if (!Number.isNaN(qid)) map[qid] = { id: a.id, content: String(a.content || "") };
+        });
+        setAnswersByQ(map);
+      } catch (err: any) {
+        const message = getErrorMessage(err) || "No fue posible cargar preguntas y respuestas";
+        Swal.fire("Error", message, "error");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [userId]);
+
+  const updateLocal = (questionId: number, patch: Partial<{ content: string; id?: number }>) => {
+    setAnswersByQ((prev) => ({ ...prev, [questionId]: { ...(prev[questionId] || { content: "" }), ...patch } }));
+  };
+
+  const onSave = async (qId: number) => {
+    const entry = answersByQ[qId] || { content: "" };
+    const content = (entry.content || "").trim();
+    if (!content) {
+      Swal.fire("Validación", "La respuesta no puede estar vacía", "warning");
+      return;
+    }
+    try {
+      setSavingId(qId);
+      if (entry.id) {
+        await answerService.update(Number(entry.id), { content });
+      } else {
+        const created = await answerService.create(userId, qId, { content });
+        updateLocal(qId, { id: Number((created as any).id) });
+      }
+      Swal.fire("Guardado", "Respuesta guardada", "success");
+    } catch (err: any) {
+      const message = getErrorMessage(err) || "Error guardando respuesta";
+      Swal.fire("Error", message, "error");
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const onDelete = async (qId: number) => {
+    const entry = answersByQ[qId];
+    if (!entry?.id) return;
+    const res = await Swal.fire({ title: "¿Eliminar respuesta?", text: "Esta acción no se puede deshacer", icon: "warning", showCancelButton: true });
+    if (!res.isConfirmed) return;
+    try {
+      setSavingId(qId);
+      await answerService.delete(Number(entry.id));
+      const clone = { ...answersByQ };
+      clone[qId] = { content: "" };
+      setAnswersByQ(clone);
+      Swal.fire("Eliminada", "Respuesta eliminada", "success");
+    } catch (err: any) {
+      const message = getErrorMessage(err) || "Error eliminando respuesta";
+      Swal.fire("Error", message, "error");
+    } finally { setSavingId(null); }
+  };
+
+  if (loading) return <div className="text-gray-500">Cargando...</div>;
+
+  return (
+    <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark">
+      <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Preguntas de seguridad</h3>
+      {questions.length === 0 ? (
+        <div className="text-gray-500">No hay preguntas configuradas.</div>
+      ) : (
+        <div className="space-y-4">
+          {questions.map((q) => (
+            <div key={q.id} className="border border-stroke rounded-md p-3 dark:border-strokedark">
+              <div className="font-medium text-black dark:text-white">{q.name}</div>
+              {q.description && <div className="text-xs text-gray-500 mb-2">{q.description}</div>}
+              <div className="flex gap-3 items-center">
+                <input
+                  placeholder="Tu respuesta"
+                  value={answersByQ[q.id]?.content || ""}
+                  onChange={(e) => updateLocal(q.id, { content: e.target.value })}
+                  className="flex-1 rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white"
+                />
+                <button onClick={() => onSave(q.id)} disabled={savingId === q.id} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">
+                  {savingId === q.id ? "Guardando..." : (answersByQ[q.id]?.id ? "Actualizar" : "Guardar")}
+                </button>
+                {answersByQ[q.id]?.id && (
+                  <button onClick={() => onDelete(q.id)} className="rounded-md border border-red-300 px-4 py-2 text-red-600 hover:bg-red-50">Eliminar</button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AddressTab({ userId }: { userId: number }) {
+  const [address, setAddress] = useState<Address | null>(null);
+  const [form, setForm] = useState<Address>({ street: "", number: "", latitude: undefined, longitude: undefined });
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        // El backend devuelve lista (aunque 1:1), tomamos el primero si existiera
+        const data = await addressService.getAddressesByUser(userId);
+        const first = Array.isArray(data) ? (data[0] || null) : (data as any);
+        setAddress(first);
+        if (first) setForm({
+          street: first.street || "",
+          number: first.number || "",
+          latitude: first.latitude ?? undefined,
+          longitude: first.longitude ?? undefined,
+        });
+      } catch (err: any) {
+        const message = getErrorMessage(err) || "No fue posible cargar la dirección";
+        Swal.fire("Error", message, "error");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [userId]);
+
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm((p) => ({ ...p, [name]: name === "latitude" || name === "longitude" ? (value === "" ? undefined : Number(value)) : value }));
+  };
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.street?.trim() || !form.number?.trim()) {
+      Swal.fire("Validación", "Street y Number son obligatorios", "warning");
+      return;
+    }
+    try {
+      setSaving(true);
+      const payload: Partial<Address> = {
+        street: form.street.trim(),
+        number: form.number.trim(),
+        latitude: form.latitude,
+        longitude: form.longitude,
+      };
+      if (address?.id) {
+        const updated = await addressService.updateAddress(address.id, payload);
+        setAddress(updated);
+        Swal.fire("Actualizado", "Dirección actualizada", "success");
+      } else {
+        const created = await addressService.createAddress(userId, payload);
+        setAddress(created);
+        Swal.fire("Creado", "Dirección creada", "success");
+      }
+    } catch (err: any) {
+      const message = getErrorMessage(err) || "Error guardando dirección";
+      Swal.fire("Error", message, "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <div className="text-gray-500">Cargando...</div>;
+
+  return (
+    <div className="rounded-sm border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
+      <h3 className="text-lg font-semibold mb-4 text-black dark:text-white">Address</h3>
+      <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm text-black mb-1 dark:text-white">Street</label>
+          <input name="street" value={form.street || ""} onChange={onChange} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+        </div>
+        <div>
+          <label className="block text-sm text-black mb-1 dark:text-white">Number</label>
+          <input name="number" value={form.number || ""} onChange={onChange} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+        </div>
+        <div>
+          <label className="block text-sm text-black mb-1 dark:text-white">Latitude</label>
+          <input name="latitude" type="number" step="0.000001" value={(form.latitude ?? "") as any} onChange={onChange} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+        </div>
+        <div>
+          <label className="block text-sm text-black mb-1 dark:text-white">Longitude</label>
+          <input name="longitude" type="number" step="0.000001" value={(form.longitude ?? "") as any} onChange={onChange} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+        </div>
+        <div className="md:col-span-2 flex justify-end gap-3 pt-2">
+          <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">
+            {saving ? "Guardando..." : address?.id ? "Actualizar" : "Crear"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function ProfileTab({ userId }: { userId: number }) {
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [phone, setPhone] = useState("");
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await profileService.getProfileByUser(userId);
+        setProfile(data);
+        if (data) setPhone(data.phone || "");
+      } catch (err: any) {
+        const message = getErrorMessage(err) || "No fue posible cargar el perfil";
+        Swal.fire("Error", message, "error");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [userId]);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setSaving(true);
+      if (profile?.id) {
+        const updated = await profileService.updateProfile(profile.id, { phone: phone?.trim(), photo });
+        setProfile(updated);
+        Swal.fire("Actualizado", "Perfil actualizado", "success");
+      } else {
+        const created = await profileService.createProfile(userId, { phone: phone?.trim(), photo });
+        setProfile(created);
+        Swal.fire("Creado", "Perfil creado", "success");
+      }
+    } catch (err: any) {
+      const message = getErrorMessage(err) || "Error guardando perfil";
+      Swal.fire("Error", message, "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <div className="text-gray-500">Cargando...</div>;
+
+  return (
+    <div className="rounded-sm border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
+      <h3 className="text-lg font-semibold mb-4 text-black dark:text-white">Profile</h3>
+      <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm text-black mb-1 dark:text-white">Phone</label>
+          <input value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+        </div>
+        <div>
+          <label className="block text-sm text-black mb-1 dark:text-white">Photo</label>
+          <input type="file" accept="image/*" onChange={(e) => setPhoto(e.target.files?.[0] || null)} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+        </div>
+        <div className="md:col-span-2 flex justify-end gap-3 pt-2">
+          <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">
+            {saving ? "Guardando..." : profile?.id ? "Actualizar" : "Crear"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function SignatureTab({ userId }: { userId: number }) {
+  const [signature, setSignature] = useState<any | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await digitalSignatureService.getSignatureByUser(userId);
+        setSignature(data);
+      } catch (err: any) {
+        const message = getErrorMessage(err) || "No fue posible cargar la firma";
+        Swal.fire("Error", message, "error");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [userId]);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file && !signature?.id) {
+      Swal.fire("Validación", "Selecciona una imagen para la firma", "warning");
+      return;
+    }
+    try {
+      setSaving(true);
+      if (signature?.id && file) {
+        const updated = await digitalSignatureService.updateSignature(signature.id, file);
+        setSignature(updated);
+        Swal.fire("Actualizado", "Firma actualizada", "success");
+      } else if (!signature?.id && file) {
+        const created = await digitalSignatureService.createSignature(userId, file);
+        setSignature(created);
+        Swal.fire("Creado", "Firma creada", "success");
+      }
+    } catch (err: any) {
+      const message = getErrorMessage(err) || "Error guardando firma";
+      Swal.fire("Error", message, "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <div className="text-gray-500">Cargando...</div>;
+
+  return (
+    <div className="rounded-sm border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
+      <h3 className="text-lg font-semibold mb-4 text-black dark:text-white">Digital Signature</h3>
+      <form onSubmit={onSubmit} className="grid grid-cols-1 gap-4">
+        <div>
+          <label className="block text-sm text-black mb-1 dark:text-white">Imagen</label>
+          <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+        </div>
+        <div className="flex justify-end gap-3 pt-2">
+          <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">
+            {saving ? "Guardando..." : signature?.id ? "Actualizar" : "Crear"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function RolesTab({ userId }: { userId: number }) {
+  const [allRoles, setAllRoles] = useState<Array<{ id: number; name: string }>>([]);
+  const [assignments, setAssignments] = useState<Array<{ id: string; role_id: number; startAt?: string; endAt?: string }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [roleId, setRoleId] = useState<number | "">("");
+  const [startAt, setStartAt] = useState<string>("");
+  const [endAt, setEndAt] = useState<string>("");
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const [roles, urs] = await Promise.all([
+          roleService.getRoles(),
+          userRoleService.getByUser(userId),
+        ]);
+        const compact = (roles || []).filter((r: any) => r?.id != null && r?.name != null).map((r: any) => ({ id: Number(r.id), name: String(r.name) }));
+        setAllRoles(compact);
+        setAssignments(urs || []);
+      } catch (err: any) {
+        const message = getErrorMessage(err) || "No fue posible cargar roles";
+        Swal.fire("Error", message, "error");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [userId]);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!roleId) {
+      Swal.fire("Validación", "Selecciona un rol", "warning");
+      return;
+    }
+    if (!startAt || !endAt) {
+      Swal.fire("Validación", "Debes indicar start y end", "warning");
+      return;
+    }
+    const sDate = new Date(startAt);
+    const eDate = new Date(endAt);
+    if (Number.isNaN(sDate.getTime()) || Number.isNaN(eDate.getTime()) || eDate <= sDate) {
+      Swal.fire("Validación", "La fecha de fin debe ser posterior al inicio", "warning");
+      return;
+    }
+    try {
+      setSaving(true);
+      await userRoleService.assign(userId, Number(roleId), { startAt, endAt });
+      const urs = await userRoleService.getByUser(userId);
+      setAssignments(urs || []);
+      setRoleId("");
+      setStartAt("");
+      setEndAt("");
+      Swal.fire("Asignado", "Rol asignado al usuario", "success");
+    } catch (err: any) {
+      const message = getErrorMessage(err) || "Error asignando rol";
+      Swal.fire("Error", message, "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const onDelete = async (id: string) => {
+    const res = await Swal.fire({ title: "¿Eliminar?", text: "Quitar este rol del usuario", icon: "warning", showCancelButton: true, confirmButtonText: "Sí, eliminar" });
+    if (!res.isConfirmed) return;
+    try {
+      await userRoleService.unassign(id);
+      setAssignments((prev) => prev.filter((x) => x.id !== id));
+      Swal.fire("Eliminado", "Rol removido", "success");
+    } catch (err: any) {
+      const message = getErrorMessage(err) || "Error removiendo rol";
+      Swal.fire("Error", message, "error");
+    }
+  };
+
+  return (
+    <div className="grid gap-6">
+      <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark">
+        <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Asignar rol</h3>
+        <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <select value={roleId} onChange={(e) => setRoleId(e.target.value ? Number(e.target.value) : "")} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white">
+            <option value="">Selecciona un rol</option>
+            {allRoles.map((r) => (
+              <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
+          </select>
+          {allRoles.length === 0 && (
+            <div className="md:col-span-3 text-sm text-gray-500 self-center">
+              No hay roles disponibles. Crea roles en la sección <a className="text-primary underline" href="/roles">Roles</a>.
+            </div>
+          )}
+          <input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <div className="md:col-span-4 flex justify-end">
+            <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">{saving ? "Guardando..." : "Asignar"}</button>
+          </div>
+        </form>
+      </div>
+
+      <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark">
+        <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Roles del usuario</h3>
+        {loading ? (
+          <div className="text-gray-500">Cargando...</div>
+        ) : assignments.length === 0 ? (
+          <div className="text-gray-500">Sin roles asignados</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left">
+              <thead>
+                <tr className="text-sm text-black dark:text-white">
+                  <th className="py-2 pr-4">Rol</th>
+                  <th className="py-2 pr-4">startAt</th>
+                  <th className="py-2 pr-4">endAt</th>
+                  <th className="py-2 pr-4"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {assignments.map((ur) => (
+                  <tr key={ur.id} className="border-t border-stroke dark:border-strokedark">
+                    <td className="py-2 pr-4 text-black dark:text-white">{allRoles.find((r) => r.id === ur.role_id)?.name || ur.role_id}</td>
+                    <td className="py-2 pr-4 text-black dark:text-white">{String(ur.startAt || "")}</td>
+                    <td className="py-2 pr-4 text-black dark:text-white">{String(ur.endAt || "")}</td>
+                    <td className="py-2 pr-4 text-right">
+                      <button onClick={() => onDelete(ur.id)} className="rounded-md border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DevicesTab({ userId }: { userId: number }) {
+  const [items, setItems] = useState<Device[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState<Required<Pick<Device, "name" | "ip">> & { operatingSystem?: string }>(
+    { name: "", ip: "", operatingSystem: "" }
+  );
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const data = await deviceService.getDevicesByUser(userId);
+        setItems(data);
+      } catch (err: any) {
+        const message = getErrorMessage(err) || "No fue posible cargar los dispositivos";
+        Swal.fire("Error", message, "error");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [userId]);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.ip.trim()) {
+      Swal.fire("Validación", "Name e IP son obligatorios", "warning");
+      return;
+    }
+    try {
+      setSaving(true);
+      await deviceService.createDevice(userId, {
+        name: form.name.trim(),
+        ip: form.ip.trim(),
+        operatingSystem: form.operatingSystem?.trim() || undefined,
+      });
+      setForm({ name: "", ip: "", operatingSystem: "" });
+      // reload
+      setLoading(true);
+      const data = await deviceService.getDevicesByUser(userId);
+      setItems(data);
+      setLoading(false);
+      Swal.fire("Creado", "Dispositivo creado", "success");
+    } catch (err: any) {
+      const message = getErrorMessage(err) || "Error creando dispositivo";
+      Swal.fire("Error", message, "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const onDelete = async (id?: number) => {
+    if (!id) return;
+    const res = await Swal.fire({ title: "¿Eliminar?", text: "Esta acción no se puede deshacer", icon: "warning", showCancelButton: true, confirmButtonText: "Sí, eliminar" });
+    if (!res.isConfirmed) return;
+    try {
+      await deviceService.deleteDevice(id);
+      setItems((prev) => prev.filter((it) => it.id !== id));
+      Swal.fire("Eliminado", "Dispositivo eliminado", "success");
+    } catch (err: any) {
+      const message = getErrorMessage(err) || "Error eliminando dispositivo";
+      Swal.fire("Error", message, "error");
+    }
+  };
+
+  return (
+    <div className="grid gap-6">
+      <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark">
+        <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Nuevo dispositivo</h3>
+        <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <input placeholder="Name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input placeholder="IP" value={form.ip} onChange={(e) => setForm((p) => ({ ...p, ip: e.target.value }))} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input placeholder="Operating System" value={form.operatingSystem || ""} onChange={(e) => setForm((p) => ({ ...p, operatingSystem: e.target.value }))} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <div className="md:col-span-3 flex justify-end">
+            <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">{saving ? "Guardando..." : "Crear"}</button>
+          </div>
+        </form>
+      </div>
+
+      <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark">
+        <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Dispositivos</h3>
+        {loading ? (
+          <div className="text-gray-500">Cargando...</div>
+        ) : items.length === 0 ? (
+          <div className="text-gray-500">Sin registros</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left">
+              <thead>
+                <tr className="text-sm text-black dark:text-white">
+                  <th className="py-2 pr-4">Name</th>
+                  <th className="py-2 pr-4">IP</th>
+                  <th className="py-2 pr-4">Operating System</th>
+                  <th className="py-2 pr-4"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((d) => (
+                  <tr key={d.id} className="border-t border-stroke dark:border-strokedark">
+                    <td className="py-2 pr-4 text-black dark:text-white">{d.name}</td>
+                    <td className="py-2 pr-4 text-black dark:text-white">{d.ip}</td>
+                    <td className="py-2 pr-4 text-black dark:text-white">{d.operatingSystem || ""}</td>
+                    <td className="py-2 pr-4 text-right">
+                      <button onClick={() => onDelete(d.id)} className="rounded-md border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PasswordsTab({ userId }: { userId: number }) {
+  const [items, setItems] = useState<Password[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [content, setContent] = useState("");
+  const [startAt, setStartAt] = useState<string>(""); // datetime-local
+  const [endAt, setEndAt] = useState<string>(""); // datetime-local
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const data = await passwordService.getPasswordsByUser(userId);
+        setItems(data);
+      } catch (err: any) {
+        const message = getErrorMessage(err) || "No fue posible cargar contraseñas";
+        Swal.fire("Error", message, "error");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [userId]);
+
+  const formatDateTime = (s: string) => {
+    if (!s) return "";
+    const d = new Date(s);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  };
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!content.trim() || !startAt || !endAt) {
+      Swal.fire("Validación", "Content, start y end son obligatorios", "warning");
+      return;
+    }
+    const sDate = new Date(startAt);
+    const eDate = new Date(endAt);
+    if (Number.isNaN(sDate.getTime()) || Number.isNaN(eDate.getTime()) || eDate <= sDate) {
+      Swal.fire("Validación", "La fecha de fin debe ser posterior al inicio", "warning");
+      return;
+    }
+    try {
+      setSaving(true);
+      await passwordService.createPassword(userId, {
+        content: content.trim(),
+        startsAt: undefined, // not used by API
+        endsAt: undefined, // not used by API
+        // backend expects startAt/endAt string keys
+        // we'll send them via type cast to any
+        ...( { startAt: formatDateTime(startAt), endAt: formatDateTime(endAt) } as any ),
+      });
+      setContent("");
+      setStartAt("");
+      setEndAt("");
+      setLoading(true);
+      const data = await passwordService.getPasswordsByUser(userId);
+      setItems(data);
+      setLoading(false);
+      Swal.fire("Creado", "Contraseña registrada", "success");
+    } catch (err: any) {
+      const message = getErrorMessage(err) || "Error creando contraseña";
+      Swal.fire("Error", message, "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const onDelete = async (id?: number) => {
+    if (!id) return;
+    const res = await Swal.fire({ title: "¿Eliminar?", text: "Esta acción no se puede deshacer", icon: "warning", showCancelButton: true, confirmButtonText: "Sí, eliminar" });
+    if (!res.isConfirmed) return;
+    try {
+      await passwordService.deletePassword(id);
+      setItems((prev) => prev.filter((it) => it.id !== id));
+      Swal.fire("Eliminado", "Contraseña eliminada", "success");
+    } catch (err: any) {
+      const message = getErrorMessage(err) || "Error eliminando contraseña";
+      Swal.fire("Error", message, "error");
+    }
+  };
+
+  return (
+    <div className="grid gap-6">
+      <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark">
+        <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Nueva contraseña</h3>
+        <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <input placeholder="Content" value={content} onChange={(e) => setContent(e.target.value)} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <div className="md:col-span-4 flex justify-end">
+            <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">{saving ? "Guardando..." : "Crear"}</button>
+          </div>
+        </form>
+      </div>
+
+      <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark">
+        <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Historial de contraseñas</h3>
+        {loading ? (
+          <div className="text-gray-500">Cargando...</div>
+        ) : items.length === 0 ? (
+          <div className="text-gray-500">Sin registros</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left">
+              <thead>
+                <tr className="text-sm text-black dark:text-white">
+                  <th className="py-2 pr-4">ID</th>
+                  <th className="py-2 pr-4">startAt</th>
+                  <th className="py-2 pr-4">endAt</th>
+                  <th className="py-2 pr-4"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((p) => (
+                  <tr key={p.id} className="border-t border-stroke dark:border-strokedark">
+                    <td className="py-2 pr-4 text-black dark:text-white">{p.id}</td>
+                    <td className="py-2 pr-4 text-black dark:text-white">{String((p as any).startAt || (p as any).startsAt || "")}</td>
+                    <td className="py-2 pr-4 text-black dark:text-white">{String((p as any).endAt || (p as any).endsAt || "")}</td>
+                    <td className="py-2 pr-4 text-right">
+                      <button onClick={() => onDelete(p.id)} className="rounded-md border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SessionsTab({ userId }: { userId: number }) {
+  const [items, setItems] = useState<Session[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [token, setToken] = useState<string>("");
+  const [expiration, setExpiration] = useState<string>(() => {
+    const d = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  });
+  const [faCode, setFaCode] = useState<string>("");
+  const [state, setState] = useState<string>("active");
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const data = await sessionService.getSessionsByUser(userId);
+        setItems(data);
+      } catch (err: any) {
+        const message = getErrorMessage(err) || "No fue posible cargar sesiones";
+        Swal.fire("Error", message, "error");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [userId]);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setSaving(true);
+      await sessionService.createSession(userId, {
+        token: token?.trim() || undefined,
+        expiration,
+        FACode: faCode?.trim() || undefined,
+        state,
+      });
+      setToken("");
+      setFaCode("");
+      setLoading(true);
+      const data = await sessionService.getSessionsByUser(userId);
+      setItems(data);
+      setLoading(false);
+      Swal.fire("Creado", "Sesión creada", "success");
+    } catch (err: any) {
+      const message = getErrorMessage(err) || "Error creando sesión";
+      Swal.fire("Error", message, "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const onDelete = async (id?: string) => {
+    if (!id) return;
+    const res = await Swal.fire({ title: "¿Eliminar?", text: "Esta acción no se puede deshacer", icon: "warning", showCancelButton: true, confirmButtonText: "Sí, eliminar" });
+    if (!res.isConfirmed) return;
+    try {
+      await sessionService.deleteSession(id);
+      setItems((prev) => prev.filter((it) => it.id !== id));
+      Swal.fire("Eliminado", "Sesión eliminada", "success");
+    } catch (err: any) {
+      const message = getErrorMessage(err) || "Error eliminando sesión";
+      Swal.fire("Error", message, "error");
+    }
+  };
+
+  return (
+    <div className="grid gap-6">
+      <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark">
+        <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Nueva sesión</h3>
+        <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-5 gap-3">
+          <input placeholder="Token (opcional)" value={token} onChange={(e) => setToken(e.target.value)} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input type="datetime-local" value={expiration} onChange={(e) => setExpiration(e.target.value)} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input placeholder="FA Code" value={faCode} onChange={(e) => setFaCode(e.target.value)} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <select value={state} onChange={(e) => setState(e.target.value)} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white">
+            <option value="active">active</option>
+            <option value="inactive">inactive</option>
+          </select>
+          <div className="md:col-span-5 flex justify-end">
+            <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">{saving ? "Guardando..." : "Crear"}</button>
+          </div>
+        </form>
+      </div>
+
+      <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark">
+        <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Sesiones</h3>
+        {loading ? (
+          <div className="text-gray-500">Cargando...</div>
+        ) : items.length === 0 ? (
+          <div className="text-gray-500">Sin registros</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left">
+              <thead>
+                <tr className="text-sm text-black dark:text-white">
+                  <th className="py-2 pr-4">ID</th>
+                  <th className="py-2 pr-4">Token</th>
+                  <th className="py-2 pr-4">Expiration</th>
+                  <th className="py-2 pr-4">FA Code</th>
+                  <th className="py-2 pr-4">State</th>
+                  <th className="py-2 pr-4"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((s) => (
+                  <tr key={s.id} className="border-t border-stroke dark:border-strokedark">
+                    <td className="py-2 pr-4 text-black dark:text-white">{s.id}</td>
+                    <td className="py-2 pr-4 text-black dark:text-white">{s.token}</td>
+                    <td className="py-2 pr-4 text-black dark:text-white">{String(s.expiration || "")}</td>
+                    <td className="py-2 pr-4 text-black dark:text-white">{s.FACode || ""}</td>
+                    <td className="py-2 pr-4 text-black dark:text-white">{s.state}</td>
+                    <td className="py-2 pr-4 text-right">
+                      <button onClick={() => onDelete(s.id)} className="rounded-md border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

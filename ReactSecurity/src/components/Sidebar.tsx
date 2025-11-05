@@ -15,6 +15,7 @@ export function Sidebar({
     { label: "Users", route: "/users" },
     { label: "Roles", route: "/roles" },
     { label: "Permissions", route: "/permissions" },
+    { label: "Security Questions", route: "/security-questions" },
   ];
 
   const handleClick = (route: string) => {
