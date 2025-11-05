@@ -41,16 +41,30 @@ Paso 1: Para ingresar a la terminal cd ReactSecurity (Dentro de esta carpeta se 
 # Ir a carpeta del frontend
 cd .\ReactSecurity
 
+Nota: Si ya estás dentro de la carpeta `ReactSecurity`, no vuelvas a ejecutar este comando o intentará entrar en `ReactSecurity/ReactSecurity` y fallará. En PowerShell puedes verificar tu ubicación con:
+
+```powershell
+Get-Location
+```
+
+Para subir una carpeta usa:
+
+```powershell
+cd ..
+```
+
 # Instalar dependencias del frontend
 npm install
 
 Paso : Instalar la libreria Node.Modules --> "npm install"
 
 Paso: Instalar Tailwind CSS "npm install -D tailwindcss@latest"
+Paso: Instalar plugin PostCSS de Tailwind (v4) "npm install -D @tailwindcss/postcss"
 
-Paso: Instalar TypeScript --> "npm install -D typescript
+Paso: Instalar TypeScript --> "npm install -D typescript"
 
-Paso: Instalar el plugin de Prettier --> "npm install -D prettier-plugin
+Paso: Instalar Prettier (formateador) --> "npm install -D prettier"
+Nota: "prettier-plugin" no es un paquete válido. Si quieres ordenar clases de Tailwind, puedes instalar opcionalmente "npm install -D prettier-plugin-tailwindcss".
 
 
 Paso : Usar "npm install firebase" Para los logins
