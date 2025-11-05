@@ -45,10 +45,7 @@ export default function UsersList() {
     setShowForm(true);
   }
 
-  function openEdit(u: User) {
-    setForm({ id: u.id, name: u.name || "", email: u.email || "" });
-    setShowForm(true);
-  }
+  // Edición desde lista ahora redirige a /users/:id/edit. Se deja el modal para uso futuro manual si se requiere.
 
   function closeForm() {
     setShowForm(false);
@@ -147,7 +144,10 @@ export default function UsersList() {
                 if (item.id) window.location.href = `/users/${item.id}`;
                 return;
               }
-              if (action === "edit") openEdit(item);
+              if (action === "edit") {
+                if (item.id) window.location.href = `/users/${item.id}/edit`;
+                return;
+              }
               if (action === "delete") onDelete(item);
             }}
           />

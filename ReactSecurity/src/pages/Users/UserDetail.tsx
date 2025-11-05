@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import { getErrorMessage } from "../../lib/errors.ts";
 import api from "../../interceptors/axiosInterceptor.ts";
@@ -26,6 +26,10 @@ export default function UserDetail() {
   const { id } = useParams<{ id: string }>();
   const userId = Number(id);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isEditMode = /\/users\/(\d+)\/edit$/.test(location.pathname);
+  const readOnly = !isEditMode;
 
   const [active, setActive] = useState<TabKey>("address");
 
@@ -68,19 +72,19 @@ export default function UserDetail() {
         </nav>
       </div>
 
-      {active === "address" && <AddressTab userId={userId} />} 
-      {active === "profile" && <ProfileTab userId={userId} />} 
-      {active === "signature" && <SignatureTab userId={userId} />} 
-      {active === "devices" && <DevicesTab userId={userId} />} 
-      {active === "passwords" && <PasswordsTab userId={userId} />} 
-      {active === "sessions" && <SessionsTab userId={userId} />} 
-  {active === "roles" && <RolesTab userId={userId} />}
-  {active === "questions" && <SecurityAnswersTab userId={userId} />}
+    {active === "address" && <AddressTab userId={userId} readOnly={readOnly} />} 
+    {active === "profile" && <ProfileTab userId={userId} readOnly={readOnly} />} 
+    {active === "signature" && <SignatureTab userId={userId} readOnly={readOnly} />} 
+    {active === "devices" && <DevicesTab userId={userId} readOnly={readOnly} />} 
+    {active === "passwords" && <PasswordsTab userId={userId} readOnly={readOnly} />} 
+    {active === "sessions" && <SessionsTab userId={userId} readOnly={readOnly} />} 
+    {active === "roles" && <RolesTab userId={userId} readOnly={readOnly} />}
+    {active === "questions" && <SecurityAnswersTab userId={userId} readOnly={readOnly} />}
     </div>
   );
 }
 
-function SecurityAnswersTab({ userId }: { userId: number }) {
+function SecurityAnswersTab({ userId, readOnly }: { userId: number; readOnly?: boolean }) {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<number | null>(null);
   const [questions, setQuestions] = useState<Array<{ id: number; name: string; description?: string }>>([]);
@@ -116,6 +120,7 @@ function SecurityAnswersTab({ userId }: { userId: number }) {
   };
 
   const onSave = async (qId: number) => {
+    if (readOnly) return;
     const entry = answersByQ[qId] || { content: "" };
     const content = (entry.content || "").trim();
     if (!content) {
@@ -140,6 +145,7 @@ function SecurityAnswersTab({ userId }: { userId: number }) {
   };
 
   const onDelete = async (qId: number) => {
+    if (readOnly) return;
     const entry = answersByQ[qId];
     if (!entry?.id) return;
     const res = await Swal.fire({ title: "¿Eliminar respuesta?", text: "Esta acción no se puede deshacer", icon: "warning", showCancelButton: true });
@@ -175,13 +181,18 @@ function SecurityAnswersTab({ userId }: { userId: number }) {
                   placeholder="Tu respuesta"
                   value={answersByQ[q.id]?.content || ""}
                   onChange={(e) => updateLocal(q.id, { content: e.target.value })}
+                  disabled={readOnly}
                   className="flex-1 rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white"
                 />
-                <button onClick={() => onSave(q.id)} disabled={savingId === q.id} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">
-                  {savingId === q.id ? "Guardando..." : (answersByQ[q.id]?.id ? "Actualizar" : "Guardar")}
-                </button>
-                {answersByQ[q.id]?.id && (
-                  <button onClick={() => onDelete(q.id)} className="rounded-md border border-red-300 px-4 py-2 text-red-600 hover:bg-red-50">Eliminar</button>
+                {!readOnly && (
+                  <>
+                    <button onClick={() => onSave(q.id)} disabled={savingId === q.id} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">
+                      {savingId === q.id ? "Guardando..." : (answersByQ[q.id]?.id ? "Actualizar" : "Guardar")}
+                    </button>
+                    {answersByQ[q.id]?.id && (
+                      <button onClick={() => onDelete(q.id)} className="rounded-md border border-red-300 px-4 py-2 text-red-600 hover:bg-red-50">Eliminar</button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -192,7 +203,7 @@ function SecurityAnswersTab({ userId }: { userId: number }) {
   );
 }
 
-function AddressTab({ userId }: { userId: number }) {
+function AddressTab({ userId, readOnly }: { userId: number; readOnly?: boolean }) {
   const [address, setAddress] = useState<Address | null>(null);
   const [form, setForm] = useState<Address>({ street: "", number: "", latitude: undefined, longitude: undefined });
   const [saving, setSaving] = useState(false);
@@ -227,6 +238,7 @@ function AddressTab({ userId }: { userId: number }) {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (readOnly) return;
     if (!form.street?.trim() || !form.number?.trim()) {
       Swal.fire("Validación", "Street y Number son obligatorios", "warning");
       return;
@@ -264,31 +276,33 @@ function AddressTab({ userId }: { userId: number }) {
       <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm text-black mb-1 dark:text-white">Street</label>
-          <input name="street" value={form.street || ""} onChange={onChange} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input name="street" value={form.street || ""} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
         </div>
         <div>
           <label className="block text-sm text-black mb-1 dark:text-white">Number</label>
-          <input name="number" value={form.number || ""} onChange={onChange} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input name="number" value={form.number || ""} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
         </div>
         <div>
           <label className="block text-sm text-black mb-1 dark:text-white">Latitude</label>
-          <input name="latitude" type="number" step="0.000001" value={(form.latitude ?? "") as any} onChange={onChange} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input name="latitude" type="number" step="0.000001" value={(form.latitude ?? "") as any} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
         </div>
         <div>
           <label className="block text-sm text-black mb-1 dark:text-white">Longitude</label>
-          <input name="longitude" type="number" step="0.000001" value={(form.longitude ?? "") as any} onChange={onChange} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input name="longitude" type="number" step="0.000001" value={(form.longitude ?? "") as any} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
         </div>
-        <div className="md:col-span-2 flex justify-end gap-3 pt-2">
-          <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">
-            {saving ? "Guardando..." : address?.id ? "Actualizar" : "Crear"}
-          </button>
-        </div>
+        {!readOnly && (
+          <div className="md:col-span-2 flex justify-end gap-3 pt-2">
+            <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">
+              {saving ? "Guardando..." : address?.id ? "Actualizar" : "Crear"}
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );
 }
 
-function ProfileTab({ userId }: { userId: number }) {
+function ProfileTab({ userId, readOnly }: { userId: number; readOnly?: boolean }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [phone, setPhone] = useState("");
   const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
@@ -385,20 +399,22 @@ function ProfileTab({ userId }: { userId: number }) {
       <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm text-black mb-1 dark:text-white">Phone</label>
-          <input value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input value={phone} onChange={(e) => setPhone(e.target.value)} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
         </div>
         {/* La imagen se actualiza solo en Digital Signature. Aquí no hay input de archivo. */}
-        <div className="md:col-span-2 flex justify-end gap-3 pt-2">
-          <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">
-            {saving ? "Guardando..." : profile?.id ? "Actualizar" : "Crear"}
-          </button>
-        </div>
+        {!readOnly && (
+          <div className="md:col-span-2 flex justify-end gap-3 pt-2">
+            <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">
+              {saving ? "Guardando..." : profile?.id ? "Actualizar" : "Crear"}
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );
 }
 
-function SignatureTab({ userId }: { userId: number }) {
+function SignatureTab({ userId, readOnly }: { userId: number; readOnly?: boolean }) {
   const [signature, setSignature] = useState<any | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
@@ -426,6 +442,7 @@ function SignatureTab({ userId }: { userId: number }) {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (readOnly) return;
     if (!file && !signature?.id) {
       Swal.fire("Validación", "Selecciona una imagen para la firma", "warning");
       return;
@@ -492,19 +509,21 @@ function SignatureTab({ userId }: { userId: number }) {
       <form onSubmit={onSubmit} className="grid grid-cols-1 gap-4">
         <div>
           <label className="block text-sm text-black mb-1 dark:text-white">Imagen</label>
-          <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
         </div>
-        <div className="flex justify-end gap-3 pt-2">
-          <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">
-            {saving ? "Guardando..." : signature?.id ? "Actualizar" : "Crear"}
-          </button>
-        </div>
+        {!readOnly && (
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">
+              {saving ? "Guardando..." : signature?.id ? "Actualizar" : "Crear"}
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );
 }
 
-function RolesTab({ userId }: { userId: number }) {
+function RolesTab({ userId, readOnly }: { userId: number; readOnly?: boolean }) {
   const [allRoles, setAllRoles] = useState<Array<{ id: number; name: string }>>([]);
   const [assignments, setAssignments] = useState<Array<{ id: string; role_id: number; startAt?: string; endAt?: string }>>([]);
   const [loading, setLoading] = useState(true);
@@ -584,7 +603,7 @@ function RolesTab({ userId }: { userId: number }) {
       <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark">
         <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Asignar rol</h3>
         <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <select value={roleId} onChange={(e) => setRoleId(e.target.value ? Number(e.target.value) : "")} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white">
+          <select value={roleId} onChange={(e) => setRoleId(e.target.value ? Number(e.target.value) : "")} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white">
             <option value="">Selecciona un rol</option>
             {allRoles.map((r) => (
               <option key={r.id} value={r.id}>{r.name}</option>
@@ -595,11 +614,13 @@ function RolesTab({ userId }: { userId: number }) {
               No hay roles disponibles. Crea roles en la sección <a className="text-primary underline" href="/roles">Roles</a>.
             </div>
           )}
-          <input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
-          <input type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
-          <div className="md:col-span-4 flex justify-end">
-            <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">{saving ? "Guardando..." : "Asignar"}</button>
-          </div>
+          <input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          {!readOnly && (
+            <div className="md:col-span-4 flex justify-end">
+              <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">{saving ? "Guardando..." : "Asignar"}</button>
+            </div>
+          )}
         </form>
       </div>
 
@@ -614,6 +635,7 @@ function RolesTab({ userId }: { userId: number }) {
             <table className="min-w-full text-left">
               <thead>
                 <tr className="text-sm text-black dark:text-white">
+                  <th className="py-2 pr-4">ID</th>
                   <th className="py-2 pr-4">Rol</th>
                   <th className="py-2 pr-4">startAt</th>
                   <th className="py-2 pr-4">endAt</th>
@@ -623,11 +645,14 @@ function RolesTab({ userId }: { userId: number }) {
               <tbody>
                 {assignments.map((ur) => (
                   <tr key={ur.id} className="border-t border-stroke dark:border-strokedark">
+                    <td className="py-2 pr-4 text-black dark:text-white">{ur.id}</td>
                     <td className="py-2 pr-4 text-black dark:text-white">{allRoles.find((r) => r.id === ur.role_id)?.name || ur.role_id}</td>
                     <td className="py-2 pr-4 text-black dark:text-white">{String(ur.startAt || "")}</td>
                     <td className="py-2 pr-4 text-black dark:text-white">{String(ur.endAt || "")}</td>
                     <td className="py-2 pr-4 text-right">
-                      <button onClick={() => onDelete(ur.id)} className="rounded-md border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                      {!readOnly && (
+                        <button onClick={() => onDelete(ur.id)} className="rounded-md border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -640,7 +665,7 @@ function RolesTab({ userId }: { userId: number }) {
   );
 }
 
-function DevicesTab({ userId }: { userId: number }) {
+function DevicesTab({ userId, readOnly }: { userId: number; readOnly?: boolean }) {
   const [items, setItems] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -665,6 +690,7 @@ function DevicesTab({ userId }: { userId: number }) {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (readOnly) return;
     if (!form.name.trim() || !form.ip.trim()) {
       Swal.fire("Validación", "Name e IP son obligatorios", "warning");
       return;
@@ -710,12 +736,14 @@ function DevicesTab({ userId }: { userId: number }) {
       <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark">
         <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Nuevo dispositivo</h3>
         <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <input placeholder="Name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
-          <input placeholder="IP" value={form.ip} onChange={(e) => setForm((p) => ({ ...p, ip: e.target.value }))} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
-          <input placeholder="Operating System" value={form.operatingSystem || ""} onChange={(e) => setForm((p) => ({ ...p, operatingSystem: e.target.value }))} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
-          <div className="md:col-span-3 flex justify-end">
-            <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">{saving ? "Guardando..." : "Crear"}</button>
-          </div>
+          <input placeholder="Name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input placeholder="IP" value={form.ip} onChange={(e) => setForm((p) => ({ ...p, ip: e.target.value }))} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input placeholder="Operating System" value={form.operatingSystem || ""} onChange={(e) => setForm((p) => ({ ...p, operatingSystem: e.target.value }))} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          {!readOnly && (
+            <div className="md:col-span-3 flex justify-end">
+              <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">{saving ? "Guardando..." : "Crear"}</button>
+            </div>
+          )}
         </form>
       </div>
 
@@ -730,6 +758,7 @@ function DevicesTab({ userId }: { userId: number }) {
             <table className="min-w-full text-left">
               <thead>
                 <tr className="text-sm text-black dark:text-white">
+                  <th className="py-2 pr-4">ID</th>
                   <th className="py-2 pr-4">Name</th>
                   <th className="py-2 pr-4">IP</th>
                   <th className="py-2 pr-4">Operating System</th>
@@ -739,11 +768,14 @@ function DevicesTab({ userId }: { userId: number }) {
               <tbody>
                 {items.map((d) => (
                   <tr key={d.id} className="border-t border-stroke dark:border-strokedark">
+                    <td className="py-2 pr-4 text-black dark:text-white">{d.id}</td>
                     <td className="py-2 pr-4 text-black dark:text-white">{d.name}</td>
                     <td className="py-2 pr-4 text-black dark:text-white">{d.ip}</td>
                     <td className="py-2 pr-4 text-black dark:text-white">{d.operatingSystem || ""}</td>
                     <td className="py-2 pr-4 text-right">
-                      <button onClick={() => onDelete(d.id)} className="rounded-md border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                      {!readOnly && (
+                        <button onClick={() => onDelete(d.id)} className="rounded-md border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -756,7 +788,7 @@ function DevicesTab({ userId }: { userId: number }) {
   );
 }
 
-function PasswordsTab({ userId }: { userId: number }) {
+function PasswordsTab({ userId, readOnly }: { userId: number; readOnly?: boolean }) {
   const [items, setItems] = useState<Password[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -788,6 +820,7 @@ function PasswordsTab({ userId }: { userId: number }) {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (readOnly) return;
     if (!content.trim() || !startAt || !endAt) {
       Swal.fire("Validación", "Content, start y end son obligatorios", "warning");
       return;
@@ -843,12 +876,14 @@ function PasswordsTab({ userId }: { userId: number }) {
       <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark">
         <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Nueva contraseña</h3>
         <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <input placeholder="Content" value={content} onChange={(e) => setContent(e.target.value)} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
-          <input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
-          <input type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
-          <div className="md:col-span-4 flex justify-end">
-            <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">{saving ? "Guardando..." : "Crear"}</button>
-          </div>
+          <input placeholder="Content" value={content} onChange={(e) => setContent(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          {!readOnly && (
+            <div className="md:col-span-4 flex justify-end">
+              <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">{saving ? "Guardando..." : "Crear"}</button>
+            </div>
+          )}
         </form>
       </div>
 
@@ -864,6 +899,7 @@ function PasswordsTab({ userId }: { userId: number }) {
               <thead>
                 <tr className="text-sm text-black dark:text-white">
                   <th className="py-2 pr-4">ID</th>
+                  <th className="py-2 pr-4">Content</th>
                   <th className="py-2 pr-4">startAt</th>
                   <th className="py-2 pr-4">endAt</th>
                   <th className="py-2 pr-4"></th>
@@ -873,10 +909,13 @@ function PasswordsTab({ userId }: { userId: number }) {
                 {items.map((p) => (
                   <tr key={p.id} className="border-t border-stroke dark:border-strokedark">
                     <td className="py-2 pr-4 text-black dark:text-white">{p.id}</td>
+                    <td className="py-2 pr-4 text-black dark:text-white">{String(p.content || "")}</td>
                     <td className="py-2 pr-4 text-black dark:text-white">{String((p as any).startAt || (p as any).startsAt || "")}</td>
                     <td className="py-2 pr-4 text-black dark:text-white">{String((p as any).endAt || (p as any).endsAt || "")}</td>
                     <td className="py-2 pr-4 text-right">
-                      <button onClick={() => onDelete(p.id)} className="rounded-md border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                      {!readOnly && (
+                        <button onClick={() => onDelete(p.id)} className="rounded-md border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -889,7 +928,7 @@ function PasswordsTab({ userId }: { userId: number }) {
   );
 }
 
-function SessionsTab({ userId }: { userId: number }) {
+function SessionsTab({ userId, readOnly }: { userId: number; readOnly?: boolean }) {
   const [items, setItems] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -919,6 +958,7 @@ function SessionsTab({ userId }: { userId: number }) {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (readOnly) return;
     try {
       setSaving(true);
       await sessionService.createSession(userId, {
@@ -961,16 +1001,18 @@ function SessionsTab({ userId }: { userId: number }) {
       <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark">
         <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Nueva sesión</h3>
         <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-5 gap-3">
-          <input placeholder="Token (opcional)" value={token} onChange={(e) => setToken(e.target.value)} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
-          <input type="datetime-local" value={expiration} onChange={(e) => setExpiration(e.target.value)} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
-          <input placeholder="FA Code" value={faCode} onChange={(e) => setFaCode(e.target.value)} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
-          <select value={state} onChange={(e) => setState(e.target.value)} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white">
+          <input placeholder="Token (opcional)" value={token} onChange={(e) => setToken(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input type="datetime-local" value={expiration} onChange={(e) => setExpiration(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <input placeholder="FA Code" value={faCode} onChange={(e) => setFaCode(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <select value={state} onChange={(e) => setState(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white">
             <option value="active">active</option>
             <option value="inactive">inactive</option>
           </select>
-          <div className="md:col-span-5 flex justify-end">
-            <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">{saving ? "Guardando..." : "Crear"}</button>
-          </div>
+          {!readOnly && (
+            <div className="md:col-span-5 flex justify-end">
+              <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">{saving ? "Guardando..." : "Crear"}</button>
+            </div>
+          )}
         </form>
       </div>
 
@@ -1002,7 +1044,9 @@ function SessionsTab({ userId }: { userId: number }) {
                     <td className="py-2 pr-4 text-black dark:text-white">{s.FACode || ""}</td>
                     <td className="py-2 pr-4 text-black dark:text-white">{s.state}</td>
                     <td className="py-2 pr-4 text-right">
-                      <button onClick={() => onDelete(s.id)} className="rounded-md border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                      {!readOnly && (
+                        <button onClick={() => onDelete(s.id)} className="rounded-md border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -1,0 +1,139 @@
+{
+  "entidades": [
+    {
+      "nombre": "User",
+      "campos": [
+        {"nombre": "id", "tipo": "number"},
+        {"nombre": "name", "tipo": "string"},
+        {"nombre": "email", "tipo": "string"},
+        {"nombre": "password", "tipo": "string"}
+      ]
+    },
+    {
+      "nombre": "Profile",
+      "campos": [
+        {"nombre": "id", "tipo": "number"},
+        {"nombre": "phone", "tipo": "string"},
+        {"nombre": "photo", "tipo": "string"},
+        {"nombre": "user_id", "tipo": "number"}
+      ]
+    },
+    {
+      "nombre": "Address",
+      "campos": [
+        {"nombre": "id", "tipo": "number"},
+        {"nombre": "street", "tipo": "string"},
+        {"nombre": "number", "tipo": "string"},
+        {"nombre": "latitude", "tipo": "decimal"},
+        {"nombre": "longitude", "tipo": "decimal"},
+        {"nombre": "user_id", "tipo": "number"}
+      ]
+    },
+    {
+      "nombre": "DigitalSignature",
+      "campos": [
+        {"nombre": "id", "tipo": "number"},
+        {"nombre": "photo", "tipo": "string"},
+        {"nombre": "user_id", "tipo": "number"}
+      ]
+    },
+    {
+      "nombre": "Device",
+      "campos": [
+        {"nombre": "id", "tipo": "number"},
+        {"nombre": "name", "tipo": "string"},
+        {"nombre": "ip", "tipo": "string"},
+        {"nombre": "operating_system", "tipo": "string"},
+        {"nombre": "user_id", "tipo": "number"}
+      ]
+    },
+    {
+      "nombre": "Password",
+      "campos": [
+        {"nombre": "id", "tipo": "number"},
+        {"nombre": "content", "tipo": "string"},
+        {"nombre": "startAt", "tipo": "date"},
+        {"nombre": "endAt", "tipo": "date"},
+        {"nombre": "user_id", "tipo": "number"}
+      ]
+    },
+    {
+      "nombre": "Session",
+      "campos": [
+        {"nombre": "id", "tipo": "string"},
+        {"nombre": "token", "tipo": "string"},
+        {"nombre": "expiration", "tipo": "datetime"},
+        {"nombre": "FACode", "tipo": "string"},
+        {"nombre": "state", "tipo": "string"},
+        {"nombre": "user_id", "tipo": "number"}
+      ]
+    },
+    {
+      "nombre": "Role",
+      "campos": [
+        {"nombre": "id", "tipo": "number"},
+        {"nombre": "name", "tipo": "string"},
+        {"nombre": "description", "tipo": "string"}
+      ]
+    },
+    {
+      "nombre": "Permission",
+      "campos": [
+        {"nombre": "id", "tipo": "number"},
+        {"nombre": "url", "tipo": "string"},
+        {"nombre": "method", "tipo": "string"}
+      ]
+    },
+    {
+      "nombre": "UserRole",
+      "campos": [
+        {"nombre": "id", "tipo": "string"},
+        {"nombre": "startAt", "tipo": "datetime"},
+        {"nombre": "endAt", "tipo": "datetime"},
+        {"nombre": "user_id", "tipo": "number"},
+        {"nombre": "role_id", "tipo": "number"}
+      ],
+      "nota": "tabla intermedia que gestiona la relación User <-> Role con vigencia temporal"
+    },
+    {
+      "nombre": "RolePermission",
+      "campos": [
+        {"nombre": "id", "tipo": "string"},
+        {"nombre": "startAt", "tipo": "datetime"},
+        {"nombre": "endAt", "tipo": "datetime"},
+        {"nombre": "role_id", "tipo": "number"},
+        {"nombre": "permission_id", "tipo": "number"}
+      ],
+      "nota": "tabla intermedia que gestiona la relación Role <-> Permission con vigencia temporal"
+    },
+    {
+      "nombre": "SecurityQuestion",
+      "campos": [
+        {"nombre": "id", "tipo": "number"},
+        {"nombre": "name", "tipo": "string"},
+        {"nombre": "description", "tipo": "string"}
+      ]
+    },
+    {
+      "nombre": "Answer",
+      "campos": [
+        {"nombre": "id", "tipo": "number"},
+        {"nombre": "content", "tipo": "string"},
+        {"nombre": "user_id", "tipo": "number"},
+        {"nombre": "security_question_id", "tipo": "number"}
+      ],
+      "nota": "tabla intermedia que relaciona User <-> SecurityQuestion; almacena la respuesta concreta de un usuario a una pregunta"
+    }
+  ],
+  "relaciones": [
+    {"origen": "User", "destino": "Profile", "tipo": "one-to-one"},
+    {"origen": "User", "destino": "Address", "tipo": "one-to-one"},
+    {"origen": "User", "destino": "DigitalSignature", "tipo": "one-to-one"},
+    {"origen": "User", "destino": "Device", "tipo": "one-to-many"},
+    {"origen": "User", "destino": "Password", "tipo": "one-to-many"},
+    {"origen": "User", "destino": "Session", "tipo": "one-to-many"},
+    {"origen": "User", "destino": "Role", "tipo": "many-to-many", "medio": "UserRole"},
+    {"origen": "Role", "destino": "Permission", "tipo": "many-to-many", "medio": "RolePermission"},
+    {"origen": "User", "destino": "SecurityQuestion", "tipo": "many-to-many", "medio": "Answer"}
+  ]
+}

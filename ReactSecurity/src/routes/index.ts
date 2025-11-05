@@ -35,6 +35,7 @@ const routes = [
   // Security main routes
   { path: "/users", title: "Users", component: UsersList },
   { path: "/users/:id", title: "UserDetail", component: UserDetail },
+  { path: "/users/:id/edit", title: "UserDetailEdit", component: UserDetail },
   { path: "/roles", title: "Roles", component: RolesList },
   { path: "/permissions", title: "Permissions", component: PermissionList },
   { path: "/permissions/create", title: "PermissionCreate", component: PermissionCreate },
