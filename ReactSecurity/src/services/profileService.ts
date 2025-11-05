@@ -3,9 +3,13 @@ import type { Profile } from "../models/Profile.ts";
 
 class ProfileService {
 	async getProfileByUser(userId: number): Promise<Profile | null> {
-		const res = await api.get(`/api/profiles/user/${userId}`);
-		// backend puede devolver objeto o null/404 gestionado por controlador;
-		return res.data ?? null;
+		try {
+			const res = await api.get(`/api/profiles/user/${userId}`);
+			return res.data ?? null;
+		} catch (err: any) {
+			if (err?.response?.status === 404) return null; // normalizar a estado vacío
+			throw err;
+		}
 	}
 
 	async createProfile(userId: number, payload: { phone?: string; photo?: File | null }): Promise<Profile> {

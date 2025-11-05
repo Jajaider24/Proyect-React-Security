@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import { getErrorMessage } from "../../lib/errors.ts";
+import api from "../../interceptors/axiosInterceptor.ts";
 import { addressService } from "../../services/addressService.ts";
 import { profileService } from "../../services/profileService.ts";
 import { digitalSignatureService } from "../../services/digitalSignatureService.ts";
@@ -17,6 +18,7 @@ import { roleService } from "../../services/roleService.ts";
 import { userRoleService } from "../../services/userRolesService.ts";
 import { securityQuestionService } from "../../services/securityQuestionService.ts";
 import { answerService } from "../../services/answerService.ts";
+import { userService } from "../../services/usersService.ts";
 
 type TabKey = "address" | "profile" | "signature" | "devices" | "passwords" | "sessions" | "roles" | "questions";
 
@@ -289,15 +291,32 @@ function AddressTab({ userId }: { userId: number }) {
 function ProfileTab({ userId }: { userId: number }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [phone, setPhone] = useState("");
-  const [photo, setPhoto] = useState<File | null>(null);
+  const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
+  const [signature, setSignature] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const API_BASE: string = (api as any)?.defaults?.baseURL || "";
+
+  // La imagen de Profile debe COINCIDIR con la de Digital Signature
+  const currentImageUrl = (() => {
+    const raw = (signature as any)?.photo as string | undefined;
+    if (!raw) return null;
+    const base = String(raw).split(/[/\\]/).pop();
+    if (!base) return null;
+    return `${API_BASE}/api/digital-signatures/${base}`;
+  })();
 
   useEffect(() => {
     (async () => {
       try {
-        const data = await profileService.getProfileByUser(userId);
+        const [u, data, sig] = await Promise.all([
+          userService.getUserById(userId),
+          profileService.getProfileByUser(userId),
+          digitalSignatureService.getSignatureByUser(userId),
+        ]);
+        setUser(u || null);
         setProfile(data);
+        setSignature(sig || null);
         if (data) setPhone(data.phone || "");
       } catch (err: any) {
         const message = getErrorMessage(err) || "No fue posible cargar el perfil";
@@ -313,11 +332,11 @@ function ProfileTab({ userId }: { userId: number }) {
     try {
       setSaving(true);
       if (profile?.id) {
-        const updated = await profileService.updateProfile(profile.id, { phone: phone?.trim(), photo });
+        const updated = await profileService.updateProfile(profile.id, { phone: phone?.trim(), photo: null });
         setProfile(updated);
         Swal.fire("Actualizado", "Perfil actualizado", "success");
       } else {
-        const created = await profileService.createProfile(userId, { phone: phone?.trim(), photo });
+        const created = await profileService.createProfile(userId, { phone: phone?.trim(), photo: null });
         setProfile(created);
         Swal.fire("Creado", "Perfil creado", "success");
       }
@@ -333,16 +352,42 @@ function ProfileTab({ userId }: { userId: number }) {
 
   return (
     <div className="rounded-sm border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
-      <h3 className="text-lg font-semibold mb-4 text-black dark:text-white">Profile</h3>
+  <h3 className="text-lg font-semibold mb-4 text-black dark:text-white">Profile</h3>
+
+      {/* Vista estilo wireframe */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start mb-6">
+        <div className="md:col-span-2 border border-stroke dark:border-strokedark rounded-md h-[320px] flex items-center justify-center bg-gray-50 dark:bg-gray-800">
+          {currentImageUrl ? (
+            <img src={currentImageUrl} alt="Profile" className="max-h-[300px] object-contain" />
+          ) : (
+            <div className="w-[260px] h-[260px] border-2 border-dashed border-gray-300 dark:border-gray-600 relative">
+              <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">Sin foto</div>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">Name</div>
+            <div className="text-black dark:text-white">{user?.name || ""}</div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">Email</div>
+            <div className="text-black dark:text-white">{user?.email || ""}</div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">Phone</div>
+            <div className="text-black dark:text-white">{phone || profile?.phone || ""}</div>
+          </div>
+        </div>
+      </div>
+
       <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm text-black mb-1 dark:text-white">Phone</label>
           <input value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
         </div>
-        <div>
-          <label className="block text-sm text-black mb-1 dark:text-white">Photo</label>
-          <input type="file" accept="image/*" onChange={(e) => setPhoto(e.target.files?.[0] || null)} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
-        </div>
+        {/* La imagen se actualiza solo en Digital Signature. Aquí no hay input de archivo. */}
         <div className="md:col-span-2 flex justify-end gap-3 pt-2">
           <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">
             {saving ? "Guardando..." : profile?.id ? "Actualizar" : "Crear"}
@@ -356,13 +401,19 @@ function ProfileTab({ userId }: { userId: number }) {
 function SignatureTab({ userId }: { userId: number }) {
   const [signature, setSignature] = useState<any | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const API_BASE: string = (api as any)?.defaults?.baseURL || "";
 
   useEffect(() => {
     (async () => {
       try {
-        const data = await digitalSignatureService.getSignatureByUser(userId);
+        const [u, data] = await Promise.all([
+          userService.getUserById(userId),
+          digitalSignatureService.getSignatureByUser(userId),
+        ]);
+        setUser(u || null);
         setSignature(data);
       } catch (err: any) {
         const message = getErrorMessage(err) || "No fue posible cargar la firma";
@@ -400,9 +451,44 @@ function SignatureTab({ userId }: { userId: number }) {
 
   if (loading) return <div className="text-gray-500">Cargando...</div>;
 
+  const preview = file
+    ? URL.createObjectURL(file)
+    : (() => {
+        const raw = (signature as any)?.photo as string | undefined;
+        if (!raw) return null;
+        const base = String(raw).split(/[/\\]/).pop();
+        if (!base) return null;
+        return `${API_BASE}/api/digital-signatures/${base}`;
+      })();
+
   return (
     <div className="rounded-sm border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
       <h3 className="text-lg font-semibold mb-4 text-black dark:text-white">Digital Signature</h3>
+
+      {/* Vista estilo wireframe */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start mb-6">
+        <div className="md:col-span-2 border border-stroke dark:border-strokedark rounded-md h-[320px] flex items-center justify-center bg-gray-50 dark:bg-gray-800">
+          {preview ? (
+            <img src={preview} alt="Signature" className="max-h-[300px] object-contain" />
+          ) : (
+            <div className="w-[260px] h-[260px] border-2 border-dashed border-gray-300 dark:border-gray-600 relative">
+              <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">Sin firma</div>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">Name</div>
+            <div className="text-black dark:text-white">{user?.name || ""}</div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">Email</div>
+            <div className="text-black dark:text-white">{user?.email || ""}</div>
+          </div>
+        </div>
+      </div>
+
       <form onSubmit={onSubmit} className="grid grid-cols-1 gap-4">
         <div>
           <label className="block text-sm text-black mb-1 dark:text-white">Imagen</label>

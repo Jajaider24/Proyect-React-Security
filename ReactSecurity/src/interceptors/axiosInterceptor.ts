@@ -16,9 +16,6 @@ declare const process: any;
 const api = axios.create({
   // Use CRA env var; import.meta.env is Vite-specific and undefined in CRA.
   baseURL: (process as any).env.REACT_APP_API_URL || "",
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 // ✅ Interceptor de solicitud: agrega token si existe
@@ -33,6 +30,20 @@ api.interceptors.request.use(
       console.log("🛰 Enviando request con token:", token.substring(0, 20) + "...");
     } else {
       console.warn("⚠ No hay token disponible, se enviará sin autenticación.");
+    }
+
+    // Asegurar Content-Type correcto: si enviamos FormData, dejar que el navegador ponga el boundary
+    const isFormData = (value: any) =>
+      typeof FormData !== "undefined" && value instanceof FormData;
+
+    if (isFormData((config as any).data)) {
+      // Eliminar Content-Type para que axios/navegador establezca multipart/form-data con boundary
+      if (config.headers && "Content-Type" in config.headers) {
+        delete (config.headers as any)["Content-Type"];
+      }
+    } else if (!config.headers || !("Content-Type" in config.headers)) {
+      // Para objetos JSON normales, axios lo pondrá automáticamente; no forzar nada aquí
+      // Dejar sin Content-Type explícito a menos que el caller lo haya indicado
     }
 
     return config;

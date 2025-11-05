@@ -4,8 +4,13 @@ export interface DigitalSignaturePayload { photo: File }
 
 class DigitalSignatureService {
 	async getSignatureByUser(userId: number): Promise<any | null> {
-		const res = await api.get(`/api/digital-signatures/user/${userId}`);
-		return res.data ?? null;
+		try {
+			const res = await api.get(`/api/digital-signatures/user/${userId}`);
+			return res.data ?? null;
+		} catch (err: any) {
+			if (err?.response?.status === 404) return null; // normalizar a estado vacío
+			throw err;
+		}
 	}
 
 	async createSignature(userId: number, photo: File): Promise<any> {

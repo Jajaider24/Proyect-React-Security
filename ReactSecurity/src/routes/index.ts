@@ -14,6 +14,8 @@ const PermissionList = lazy(() => import("../pages/Permissions/PermissionList.ts
 const PermissionCreate = lazy(() => import("../pages/Permissions/PermissionCreate.tsx"));
 const PermissionUpdate = lazy(() => import("../pages/Permissions/PermissionUpdate.tsx"));
 const SecurityQuestionsList = lazy(() => import("../pages/SecurityQuestions/SecurityQuestionsList.tsx"));
+const SignatureView = lazy(() => import("../pages/Signatures/SignatureView.tsx"));
+const ProfileView = lazy(() => import("../pages/Profiles/ProfileView.tsx"));
 
 
 const routes = [
@@ -38,6 +40,10 @@ const routes = [
   { path: "/permissions/create", title: "PermissionCreate", component: PermissionCreate },
   { path: "/permissions/update/:id", title: "PermissionUpdate", component: PermissionUpdate },
   { path: "/security-questions", title: "SecurityQuestions", component: SecurityQuestionsList },
+  // Public signature viewer
+  { path: "/signature/:id", title: "SignatureView", component: SignatureView },
+  // Public profile viewer
+  { path: "/profile/:id", title: "ProfileView", component: ProfileView },
 
 ];
 
