@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import GenericTable, { Action } from "../components/GenericTable.tsx";
 import { User } from "../models/User.ts";
-import usersService from "../services/usersService.ts";
+import { userService } from "../services/usersService.ts";
 
 const Demo: React.FC = () => {
   // Estado y responsabilidad de datos: Demo actúa como controlador (M in MCP)
@@ -12,8 +12,8 @@ const Demo: React.FC = () => {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const list = await usersService.list();
-      setUsers(list);
+      const list = await userService.getUsers();
+      setUsers(list || []);
     } finally {
       setLoading(false);
     }
@@ -37,7 +37,7 @@ const Demo: React.FC = () => {
         window.alert(`Ver usuario: ${item.name} (${item.email})`);
         break;
       case "edit": {
-        const updated = await usersService.update(item.id || 0, { name: (item.name || "") + " (edit)" });
+        const updated = await userService.updateUser(item.id || 0, { name: (item.name || "") + " (edit)" });
         if (updated) await loadUsers();
         break;
       }
@@ -46,7 +46,7 @@ const Demo: React.FC = () => {
   // Use window.confirm to avoid ESLint 'no-restricted-globals' for `confirm`.
   const ok = window.confirm(`¿Eliminar usuario ${item.name}?`);
         if (!ok) return;
-        await usersService.remove(item.id);
+        await userService.deleteUser(item.id);
         await loadUsers();
         break;
       }
@@ -58,7 +58,7 @@ const Demo: React.FC = () => {
   };
 
   const handleAddSample = async () => {
-    await usersService.create({ name: "Nuevo usuario", email: "nuevo@example.com" });
+    await userService.createUser({ name: "Nuevo usuario", email: "nuevo@example.com" });
     await loadUsers();
   };
 

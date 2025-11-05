@@ -1,47 +1,102 @@
-import { User } from "../models/User";
+// src/services/usersService.ts
+import api from "../lib/http.ts";
+import { User } from "../models/User.ts";
+import { userRoleService } from "./userRolesService.ts";
 
-const fakeDelay = (ms = 400) => new Promise((res) => setTimeout(res, ms));
+/**
+ * Servicio principal de usuarios
+ */
+const API_BASE = ((globalThis as any)?.process?.env?.REACT_APP_API_URL as string) || "";
 
-let _users: User[] = [
-  { id: 1, name: "Juan Perez", email: "juan@example.com" },
-  { id: 2, name: "María García", email: "maria@example.com" },
-  { id: 3, name: "Luis Martínez", email: "luis@example.com" },
-];
+// Provide either a mock in-memory service (no API) or a real service backed by API.
+let _userService: any;
 
-const usersService = {
-  async list(): Promise<User[]> {
-    await fakeDelay();
-    // devolver copia para evitar mutaciones externas
-    return JSON.parse(JSON.stringify(_users));
-  },
+if (!API_BASE) {
+  let nextId = 1;
+  const mockUsers: User[] = [
+    { id: nextId++, name: "Admin User", email: "admin@example.com" },
+    { id: nextId++, name: "Demo User", email: "demo@example.com" },
+  ];
 
-  async get(id?: number): Promise<User | undefined> {
-    await fakeDelay();
-    return _users.find((u) => u.id === id);
-  },
+  _userService = {
+    async getUsers(): Promise<User[]> {
+      return Promise.resolve([...mockUsers]);
+    },
+    async getUserById(id: number): Promise<User | null> {
+      return Promise.resolve(mockUsers.find((u) => u.id === id) || null);
+    },
+    async createUser(payload: Partial<User>): Promise<User> {
+      const user: User = { id: nextId++, name: payload.name || "", email: payload.email || "" } as User;
+      mockUsers.push(user);
+      return Promise.resolve(user);
+    },
+    async updateUser(id: number, payload: Partial<User>): Promise<User | null> {
+      const idx = mockUsers.findIndex((u) => u.id === id);
+      if (idx === -1) return Promise.resolve(null);
+      mockUsers[idx] = { ...mockUsers[idx], ...payload } as User;
+      return Promise.resolve(mockUsers[idx]);
+    },
+    async deleteUser(id: number): Promise<void> {
+      const idx = mockUsers.findIndex((u) => u.id === id);
+      if (idx !== -1) mockUsers.splice(idx, 1);
+      return Promise.resolve();
+    },
+    async createUserWithRoles(payload: Partial<User>, roles: number[]) {
+      const user = await this.createUser(payload);
+      const userRoles: any[] = [];
+      for (const roleId of roles) {
+        try {
+          const relation = await userRoleService.createUserRole({ userId: user.id!, roleId });
+          userRoles.push(relation);
+        } catch (e) {
+          // ignore per-user role failure in mock
+        }
+      }
+      return { user, userRoles };
+    },
+  };
+} else {
+  class UserService {
+    async getUsers(): Promise<User[]> {
+      const res = await api.get("/api/users");
+      return res.data;
+    }
 
-  async create(payload: Omit<User, "id">): Promise<User> {
-    await fakeDelay();
-    const nextId = _users.length ? Math.max(..._users.map((u) => u.id || 0)) + 1 : 1;
-    const newUser: User = { id: nextId, ...payload };
-    _users.push(newUser);
-    return newUser;
-  },
+    async getUserById(id: number): Promise<User> {
+      const res = await api.get(`/api/users/${id}`);
+      return res.data;
+    }
 
-  async update(id: number, payload: Partial<User>): Promise<User | undefined> {
-    await fakeDelay();
-    const idx = _users.findIndex((u) => u.id === id);
-    if (idx === -1) return undefined;
-    _users[idx] = { ..._users[idx], ...payload };
-    return _users[idx];
-  },
+    async createUser(payload: Partial<User>): Promise<User> {
+      const res = await api.post("/api/users", payload);
+      return res.data;
+    }
 
-  async remove(id: number): Promise<boolean> {
-    await fakeDelay();
-    const before = _users.length;
-    _users = _users.filter((u) => u.id !== id);
-    return _users.length < before;
-  },
-};
+    async updateUser(id: number, payload: Partial<User>): Promise<User> {
+      const res = await api.put(`/api/users/${id}`, payload);
+      return res.data;
+    }
 
-export default usersService;
+    async deleteUser(id: number): Promise<void> {
+      await api.delete(`/api/users/${id}`);
+    }
+
+    async createUserWithRoles(payload: Partial<User>, roles: number[]) {
+      const createdUser = await this.createUser(payload);
+      const userRoles: any[] = [];
+      for (const roleId of roles) {
+        try {
+          const relation = await userRoleService.createUserRole({ userId: createdUser.id!, roleId });
+          userRoles.push(relation);
+        } catch (error) {
+          console.warn(`Error assigning role ${roleId} to user ${createdUser.id}:`, error);
+        }
+      }
+      return { user: createdUser, userRoles };
+    }
+  }
+
+  _userService = new UserService();
+}
+
+export const userService = _userService;
