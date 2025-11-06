@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import UI from "../../components/UI/index.tsx";
+import GenericTable from "../../components/GenericTable.tsx";
 import api from "../../interceptors/axiosInterceptor.ts";
 import { getErrorMessage } from "../../lib/errors.ts";
 import type { Address } from "../../models/Address.ts";
@@ -599,6 +600,13 @@ function RolesTab({ userId, readOnly }: { userId: number; readOnly?: boolean }) 
     }
   };
 
+  const roleRows = assignments.map((ur) => ({
+    id: ur.id,
+    role: allRoles.find((r) => r.id === ur.role_id)?.name || String(ur.role_id),
+    startAt: String(ur.startAt || ""),
+    endAt: String(ur.endAt || ""),
+  }));
+
   return (
     <div className="grid gap-6">
       <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -629,37 +637,16 @@ function RolesTab({ userId, readOnly }: { userId: number; readOnly?: boolean }) 
         <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Roles del usuario</h3>
         {loading ? (
           <div className="text-gray-500">Cargando...</div>
-        ) : assignments.length === 0 ? (
-          <div className="text-gray-500">Sin roles asignados</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left">
-              <thead>
-                <tr className="text-sm text-black dark:text-white">
-                  <th className="py-2 pr-4">ID</th>
-                  <th className="py-2 pr-4">Rol</th>
-                  <th className="py-2 pr-4">startAt</th>
-                  <th className="py-2 pr-4">endAt</th>
-                  <th className="py-2 pr-4"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {assignments.map((ur) => (
-                  <tr key={ur.id} className="border-t border-stroke dark:border-strokedark">
-                    <td className="py-2 pr-4 text-black dark:text-white">{ur.id}</td>
-                    <td className="py-2 pr-4 text-black dark:text-white">{allRoles.find((r) => r.id === ur.role_id)?.name || ur.role_id}</td>
-                    <td className="py-2 pr-4 text-black dark:text-white">{String(ur.startAt || "")}</td>
-                    <td className="py-2 pr-4 text-black dark:text-white">{String(ur.endAt || "")}</td>
-                    <td className="py-2 pr-4 text-right">
-                      {!readOnly && (
-                        <UI.Button onClick={() => onDelete(ur.id)} variant="danger" className="">Eliminar</UI.Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <GenericTable
+            data={roleRows}
+            columns={["id", "role", "startAt", "endAt"]}
+            rowKey={(r: any) => r.id}
+            actions={!readOnly ? [{ name: "delete", label: "Eliminar" }] : []}
+            onAction={(name, item) => {
+              if (name === "delete") onDelete(item.id);
+            }}
+          />
         )}
       </div>
     </div>
@@ -752,37 +739,16 @@ function DevicesTab({ userId, readOnly }: { userId: number; readOnly?: boolean }
         <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Dispositivos</h3>
         {loading ? (
           <div className="text-gray-500">Cargando...</div>
-        ) : items.length === 0 ? (
-          <div className="text-gray-500">Sin registros</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left">
-              <thead>
-                <tr className="text-sm text-black dark:text-white">
-                  <th className="py-2 pr-4">ID</th>
-                  <th className="py-2 pr-4">Name</th>
-                  <th className="py-2 pr-4">IP</th>
-                  <th className="py-2 pr-4">Operating System</th>
-                  <th className="py-2 pr-4"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((d) => (
-                  <tr key={d.id} className="border-t border-stroke dark:border-strokedark">
-                    <td className="py-2 pr-4 text-black dark:text-white">{d.id}</td>
-                    <td className="py-2 pr-4 text-black dark:text-white">{d.name}</td>
-                    <td className="py-2 pr-4 text-black dark:text-white">{d.ip}</td>
-                    <td className="py-2 pr-4 text-black dark:text-white">{d.operatingSystem || ""}</td>
-                    <td className="py-2 pr-4 text-right">
-                      {!readOnly && (
-                        <UI.Button onClick={() => onDelete(d.id)} variant="danger" className="">Eliminar</UI.Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <GenericTable
+            data={items.map((d) => ({ id: d.id, name: d.name, ip: d.ip, operatingSystem: d.operatingSystem || "" }))}
+            columns={["id", "name", "ip", "operatingSystem"]}
+            rowKey={(r: any) => r.id}
+            actions={!readOnly ? [{ name: "delete", label: "Eliminar" }] : []}
+            onAction={(name, item) => {
+              if (name === "delete") onDelete(item.id);
+            }}
+          />
         )}
       </div>
     </div>
@@ -892,37 +858,21 @@ function PasswordsTab({ userId, readOnly }: { userId: number; readOnly?: boolean
         <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Historial de contraseñas</h3>
         {loading ? (
           <div className="text-gray-500">Cargando...</div>
-        ) : items.length === 0 ? (
-          <div className="text-gray-500">Sin registros</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left">
-              <thead>
-                <tr className="text-sm text-black dark:text-white">
-                  <th className="py-2 pr-4">ID</th>
-                  <th className="py-2 pr-4">Content</th>
-                  <th className="py-2 pr-4">startAt</th>
-                  <th className="py-2 pr-4">endAt</th>
-                  <th className="py-2 pr-4"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((p) => (
-                  <tr key={p.id} className="border-t border-stroke dark:border-strokedark">
-                    <td className="py-2 pr-4 text-black dark:text-white">{p.id}</td>
-                    <td className="py-2 pr-4 text-black dark:text-white">{String(p.content || "")}</td>
-                    <td className="py-2 pr-4 text-black dark:text-white">{String((p as any).startAt || (p as any).startsAt || "")}</td>
-                    <td className="py-2 pr-4 text-black dark:text-white">{String((p as any).endAt || (p as any).endsAt || "")}</td>
-                    <td className="py-2 pr-4 text-right">
-                      {!readOnly && (
-                        <UI.Button onClick={() => onDelete(p.id)} variant="danger" className="">Eliminar</UI.Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <GenericTable
+            data={items.map((p) => ({
+              id: p.id,
+              content: String(p.content || ""),
+              startAt: String((p as any).startAt || (p as any).startsAt || ""),
+              endAt: String((p as any).endAt || (p as any).endsAt || ""),
+            }))}
+            columns={["id", "content", "startAt", "endAt"]}
+            rowKey={(r: any) => r.id}
+            actions={!readOnly ? [{ name: "delete", label: "Eliminar" }] : []}
+            onAction={(name, item) => {
+              if (name === "delete") onDelete(item.id);
+            }}
+          />
         )}
       </div>
     </div>
@@ -1021,39 +971,22 @@ function SessionsTab({ userId, readOnly }: { userId: number; readOnly?: boolean 
         <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Sesiones</h3>
         {loading ? (
           <div className="text-gray-500">Cargando...</div>
-        ) : items.length === 0 ? (
-          <div className="text-gray-500">Sin registros</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left">
-              <thead>
-                <tr className="text-sm text-black dark:text-white">
-                  <th className="py-2 pr-4">ID</th>
-                  <th className="py-2 pr-4">Token</th>
-                  <th className="py-2 pr-4">Expiration</th>
-                  <th className="py-2 pr-4">FA Code</th>
-                  <th className="py-2 pr-4">State</th>
-                  <th className="py-2 pr-4"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((s) => (
-                  <tr key={s.id} className="border-t border-stroke dark:border-strokedark">
-                    <td className="py-2 pr-4 text-black dark:text-white">{s.id}</td>
-                    <td className="py-2 pr-4 text-black dark:text-white">{s.token}</td>
-                    <td className="py-2 pr-4 text-black dark:text-white">{String(s.expiration || "")}</td>
-                    <td className="py-2 pr-4 text-black dark:text-white">{s.FACode || ""}</td>
-                    <td className="py-2 pr-4 text-black dark:text-white">{s.state}</td>
-                    <td className="py-2 pr-4 text-right">
-                      {!readOnly && (
-                        <UI.Button onClick={() => onDelete(s.id)} variant="danger" className="">Eliminar</UI.Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <GenericTable
+            data={items.map((s) => ({
+              id: s.id,
+              token: s.token,
+              expiration: String(s.expiration || ""),
+              FACode: s.FACode || "",
+              state: s.state,
+            }))}
+            columns={["id", "token", "expiration", "FACode", "state"]}
+            rowKey={(r: any) => r.id}
+            actions={!readOnly ? [{ name: "delete", label: "Eliminar" }] : []}
+            onAction={(name, item) => {
+              if (name === "delete") onDelete(item.id);
+            }}
+          />
         )}
       </div>
     </div>

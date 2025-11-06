@@ -42,8 +42,24 @@ const GenericTable = <T extends Record<string, any>>({
 
   // Render helpers for action buttons per UI library
   const renderActions = (item: T) => {
+    if (libreria === "bootstrap") {
+      return (
+        <div className="btn-group" role="group" aria-label="acciones">
+          {actions.map((action) => (
+            <UI.Button
+              key={action.name}
+              variant={action.name === "delete" ? "danger" : action.name === "edit" ? "primary" : "secondary"}
+              size="sm"
+              onClick={() => onAction(action.name, item)}
+            >
+              {action.label}
+            </UI.Button>
+          ))}
+        </div>
+      );
+    }
     return (
-      <div className={libreria === "bootstrap" ? "d-flex gap-2" : "flex items-center space-x-3.5"}>
+      <div className="flex items-center space-x-3.5">
         {actions.map((action) => (
           <UI.Button key={action.name} variant={action.name === "delete" ? "danger" : action.name === "edit" ? "primary" : "secondary"} size="sm" onClick={() => onAction(action.name, item)}>
             {action.label}
@@ -57,7 +73,7 @@ const GenericTable = <T extends Record<string, any>>({
     return (
       <div className="w-full min-h-[320px] flex flex-col">
         <div className="table-responsive flex-1 overflow-auto">
-          <table className="table table-striped table-hover w-100">
+          <table className="table table-striped table-hover align-middle w-100">
           <thead>
             <tr>
               {columns.map((col) => (
@@ -71,7 +87,7 @@ const GenericTable = <T extends Record<string, any>>({
           <tbody>
             {data.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + 1} className="text-center py-4">
+                <td colSpan={columns.length + 1} className="text-center py-4 text-muted">
                   No hay datos disponibles
                 </td>
               </tr>

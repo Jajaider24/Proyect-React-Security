@@ -168,3 +168,80 @@ Aplicación React + TypeScript para gestionar un sistema de seguridad consumiend
 - Los 404 de recursos 1:1 se tratan como "no creado aún" para una UX más suave.
 
 ---
+
+## Plan de implementación — Cambio dinámico de estilo en TODAS las tablas de “Users” (antes de tocar código)
+
+Objetivo: Al cambiar el selector de librería (Tailwind / Material UI / Bootstrap) en el header, todas las tablas relacionadas con Users deben cambiar su look & feel automáticamente, incluyendo:
+- UsersList (ya usa `GenericTable` y debería cambiar de estilo hoy)
+- UserDetail > pestañas: Roles (asignaciones), Devices, Passwords (histórico), Sessions (listados)
+
+Notas de estado actual (verificado en el código):
+- Existe `LibreriaContext` y el dropdown de UI en el Header (`UIDropdown`) que alterna entre `tailwind` | `ui` (MUI) | `bootstrap`.
+- `GenericTable` ya soporta las 3 variantes y cambia el render internamente según la librería activa.
+- `UsersList` ya usa `GenericTable` (debería cambiar de estilo al alternar la librería).
+- En `UserDetail`, las tablas fueron construidas con HTML manual (<table>): no cambian de estilo automáticamente. Deben migrarse a `GenericTable` o a un `UI.Table` común.
+
+Contrato (criterios de aceptación):
+- Al alternar la librería en el dropdown, las tablas de Users cambian su estilo sin recargar la página.
+- No se altera la lógica de negocio (solo representación). Acciones (eliminar, editar, detalle) siguen funcionando.
+- Estados de vacíos/errores/carga se mantienen o mejoran (sin perder mensajes existentes).
+
+Pre-requisitos (comprobaciones rápidas):
+1) `LibreriaProvider` envuelve la app (está implementado) y persiste la selección en `localStorage`.
+2) CSS de Bootstrap cargado globalmente. Si la UI no refleja estilos de Bootstrap, importar el CSS en `public/index.html` o `src/index.tsx` (existen `public/styles/bootstrap.css` y `public/styles/mui.css`).
+3) Paquetes MUI instalados (ya están en `package.json`).
+
+Estrategia técnica (mínimo riesgo, máxima reutilización):
+- Reutilizar `GenericTable` existente para todas las listas en `UserDetail` creando “view models” simples (objetos planos con strings) para columnas.
+- Mantener los formularios de alta/edición tal cual; solo reemplazar las tablas de lectura por `GenericTable`.
+
+Pasos detallados
+1) Smoke test inicial (sin tocar código)
+   - Ir a `/users` (UsersList). Cambiar librería en el dropdown. Verificar que la tabla cambia entre Tailwind/MUI/Bootstrap.
+   - Si Bootstrap no se aplica visualmente, importar el CSS global (ver Pre-requisitos #2) y repetir.
+
+2) Migrar pestaña Roles (UserDetail > Roles)
+   - Construir un array `rows` con: `{ id, role: nombreRol, startAt, endAt }` a partir de `assignments` + `allRoles`.
+   - Renderizar `GenericTable` con `columns=["id","role","startAt","endAt"]`, `rowKey="id"`, `actions=[{name:"delete",label:"Eliminar"}]`.
+   - Reusar `onDelete` existente al manejar `onAction`.
+   - Conservar el formulario de asignación arriba (sin cambios).
+
+3) Migrar pestaña Devices
+   - Crear `rows = devices.map(d => ({ id: d.id, name: d.name, ip: d.ip, operatingSystem: d.operatingSystem||"" }))`.
+   - `GenericTable` con `columns=["id","name","ip","operatingSystem"]`, `rowKey="id"`, `actions=[{name:"delete",label:"Eliminar"}]`.
+
+4) Migrar pestaña Passwords
+   - Formatear fechas a texto (si el backend devuelve `startAt/endsAt` en distintos nombres, normalizar a `startAt` y `endAt` para la tabla).
+   - `rows = passwords.map(p => ({ id:p.id, content:String(p.content||""), startAt: String(p.startAt||p.startsAt||""), endAt: String(p.endAt||p.endsAt||"") }))`.
+   - `GenericTable` con `columns=["id","content","startAt","endAt"]`, `rowKey="id"`, `actions=[{name:"delete",label:"Eliminar"}]`.
+
+5) Migrar pestaña Sessions
+   - `rows = sessions.map(s => ({ id:s.id, token: s.token, expiration:String(s.expiration||""), FACode:s.FACode||"", state:s.state }))`.
+   - `GenericTable` con `columns=["id","token","expiration","FACode","state"]`, `rowKey=item => item.id` (string), `actions=[{name:"delete",label:"Eliminar"}]`.
+   - Si el token es muy largo, se puede truncar en el view model (ej. `token.slice(0,12)+"…"`) y dejar el completo en `title`/tooltip (opcional).
+
+6) Vacíos, carga y accesibilidad
+   - `GenericTable` ya muestra “No hay datos disponibles” si `data.length===0`.
+   - Mantener mensajes de “Cargando…” arriba de la tabla (como hoy) y solo renderizar la tabla cuando `!loading`.
+   - Verificar que los botones tengan `aria-label`/`title` cuando corresponda.
+
+7) Verificación manual (checklist)
+   - Cambiar entre Tailwind/MUI/Bootstrap y validar estilo en: UsersList, Roles (asignaciones), Devices, Passwords, Sessions.
+   - Ejecutar acciones (eliminar/asignar) en cada pestaña y validar que no cambia la lógica.
+   - Probar listas vacías y con >20 ítems para revisar scroll y overflow.
+   - Revisar modo oscuro/claro (hook `useTheme`) con cada librería visual.
+
+Riesgos y mitigaciones
+- Diferencias de spacing/altura entre MUI y Bootstrap: `GenericTable` ya ajusta contenedores con `Paper` (MUI) o `table-responsive` (Bootstrap) y wrappers con overflow.
+- Campos con `undefined`: normalizar a string vacío en view models para evitar “undefined” en celdas.
+- IDs no numéricos (ej. `Session.id` string): usar `rowKey` función.
+
+Backlog (opcional si se requiere más flexibilidad)
+- Extender `GenericTable` para aceptar definiciones de columnas con render custom: `{ header, accessor, render }`.
+- Añadir `UI.Table` (similar a `UI.Button/Input`) si aparecen tablas con celdas muy específicas.
+
+Estimación
+- Migración de las 4 pestañas: ~4 a 6 horas incluyendo pruebas manuales (sin cambios de API).
+
+Siguiente paso (tras aprobar este plan)
+- Implementar los pasos 2–5 y validar con el checklist del paso 7. No se tocará la lógica de formularios ni servicios, solo el render de tablas.

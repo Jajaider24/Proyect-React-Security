@@ -29,13 +29,14 @@ export const Button: React.FC<UIButtonProps> = ({ variant = "primary", size = "m
 
   if (libreria === "bootstrap") {
     const map = {
-      primary: "btn btn-warning",
+      primary: "btn btn-primary",
       secondary: "btn btn-secondary",
       danger: "btn btn-outline-danger",
       text: "btn btn-link",
     } as Record<ButtonVariant, string>;
+    const sizeMap = size === "sm" ? "btn-sm" : size === "lg" ? "btn-lg" : "";
     return (
-      <button className={`${map[variant]} ${className}`} {...rest}>
+      <button className={`${map[variant]} ${sizeMap} ${className}`} {...rest}>
         {children}
       </button>
     );
