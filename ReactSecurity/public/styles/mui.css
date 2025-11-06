@@ -3,6 +3,15 @@
 */
 
 html[data-libreria="ui"] {
+/* Removed: dynamic public stylesheet is no longer used.
+   The project now uses build-time imports of helper CSS from
+   src/styles/MaterialUI/mui.css (Option 1).
+   Keeping this file as a placeholder to avoid 404s in older deployments.
+*/
+ 
+/* Placeholder for dynamic loading deprecation */
+ 
+html[data-libreria="ui"] {
   --brand: #2563eb; /* blue-600 */
   --brand-contrast: #ffffff;
   --brand-2: #1e40af;
@@ -10,3 +19,4 @@ html[data-libreria="ui"] {
 
 .brand-bg { background-color: var(--brand) !important; color: var(--brand-contrast) !important; }
 .brand-border { border-color: var(--brand-2) !important; }
+}

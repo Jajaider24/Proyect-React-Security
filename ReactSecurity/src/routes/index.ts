@@ -1,7 +1,5 @@
-import { lazy } from "react";
-
-// Carga diferida del componente Demo
-const Demo = lazy(() => import("../pages/Demo.tsx"));
+import React, { lazy } from "react";
+import { Navigate } from "react-router-dom";
 // Carga diferida del componente Login (UI)
 const Login = lazy(() => import("../components/Login.tsx"));
 // Unified model page
@@ -20,9 +18,9 @@ const ProfileView = lazy(() => import("../pages/Profiles/ProfileView.tsx"));
 
 const routes = [
   {
-    path: "/demo", // Ruta para acceder al componente Demo
+    path: "/demo", // Redirige /demo a /users
     title: "Demo",
-    component: Demo,
+    component: () => React.createElement(Navigate, { to: "/users", replace: true }),
   },
   {
     path: "/login", // Ruta para visualizar el Login

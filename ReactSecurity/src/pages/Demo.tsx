@@ -7,16 +7,10 @@ import { userService } from "../services/usersService.ts";
 const Demo: React.FC = () => {
   // Estado y responsabilidad de datos: Demo actúa como controlador (M in MCP)
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
 
   const loadUsers = async () => {
-    setLoading(true);
-    try {
-      const list = await userService.getUsers();
-      setUsers(list || []);
-    } finally {
-      setLoading(false);
-    }
+    const list = await userService.getUsers();
+    setUsers(list || []);
   };
 
   useEffect(() => {
@@ -57,31 +51,20 @@ const Demo: React.FC = () => {
     }
   };
 
-  const handleAddSample = async () => {
-    await userService.createUser({ name: "Nuevo usuario", email: "nuevo@example.com" });
-    await loadUsers();
-  };
+  // handleAddSample removed: demo add-sample button disabled in production UI
 
   return (
-    <div>
-      <h1 className="text-2xl mb-4">Demo - Lista de Usuarios</h1>
-
-      <div className="mb-4">
-        <button
-          onClick={handleAddSample}
-          className="px-4 py-2 bg-blue-600 text-white rounded"
-          disabled={loading}
-        >
-          {loading ? "Cargando..." : "Agregar usuario de ejemplo"}
-        </button>
+    <div className="flex flex-col gap-6">
+      <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark flex flex-col min-h-0">
+        <div className="px-4 md:px-6 xl:px-7.5 pb-6 flex-1 min-h-0 overflow-auto">
+          <GenericTable<User>
+            data={users}
+            columns={["id", "name", "email"]}
+            actions={actions}
+            onAction={handleAction}
+          />
+        </div>
       </div>
-
-      <GenericTable<User>
-        data={users}
-        columns={["id", "name", "email"]}
-        actions={actions}
-        onAction={handleAction}
-      />
     </div>
   );
 };

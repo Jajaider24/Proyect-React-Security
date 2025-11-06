@@ -111,7 +111,7 @@ export default function UsersList() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+      <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark flex flex-col min-h-0">
         <div className="py-6 px-4 md:px-6 xl:px-7.5 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-black dark:text-white">Users</h2>
           <UI.Button type="button" onClick={openCreate} variant="primary" className="inline-flex items-center justify-center gap-2.5">
@@ -127,7 +127,7 @@ export default function UsersList() {
           <div className="px-6 pb-4 text-gray-500 text-sm">Cargando...</div>
         )}
 
-        <div className="px-4 md:px-6 xl:px-7.5 pb-6">
+        <div className="px-4 md:px-6 xl:px-7.5 pb-6 flex-1 min-h-0 overflow-auto">
           <GenericTable<User>
             data={users}
             columns={["id", "name", "email", "created_at"]}

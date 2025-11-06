@@ -1,13 +1,5 @@
-/* Public bootstrap.css copy for runtime loader
-   This is a copy of src/styles/Bootstrap/bootstrap.css so it can be loaded
-   dynamically from /styles/bootstrap.css at runtime via a <link> tag.
+/* Removed: dynamic public stylesheet is no longer used.
+  The project now uses build-time imports of helper CSS from
+  src/styles/Bootstrap/bootstrap.css (Option 1).
+  Keeping this file as a placeholder to avoid 404s in older deployments.
 */
-
-html[data-libreria="bootstrap"] {
-  --brand: #f59e0b; /* amber */
-  --brand-contrast: #0b1220; /* dark */
-  --brand-2: #92400e;
-}
-
-.brand-bg { background-color: var(--brand) !important; color: var(--brand-contrast) !important; }
-.brand-border { border-color: var(--brand-2) !important; }

@@ -34,46 +34,12 @@ export const LibreriaProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       // Exponer la librería actual como atributo en el <html> para CSS theming
       document.documentElement.setAttribute('data-libreria', libreria);
-
-      // Manejo de <link> dinámicos en head para cargar/desplegar estilos desde /styles/*
-      // Esto permite: (1) opción rápida: tener CSS global disponible en public/, y
-      // (2) opción dinámica: load/unload cuando el usuario cambia la librería.
-      const ensureLink = (id: string, href: string) => {
-        try {
-          let el = document.getElementById(id) as HTMLLinkElement | null;
-          if (!el) {
-            el = document.createElement('link');
-            el.rel = 'stylesheet';
-            el.id = id;
-            el.href = href;
-            document.head.appendChild(el);
-          }
-        } catch (e) {
-          // noop
-        }
-      };
-
-      const removeLink = (id: string) => {
-        try {
-          const el = document.getElementById(id);
-          if (el && el.parentNode) el.parentNode.removeChild(el);
-        } catch (e) {
-          // noop
-        }
-      };
-
-      // If selecting bootstrap, load bootstrap public CSS and remove mui; if ui, load mui and remove bootstrap; else remove both.
-      if (libreria === 'bootstrap') {
-        ensureLink('lib-bootstrap-css', '/styles/bootstrap.css');
-        removeLink('lib-mui-css');
-      } else if (libreria === 'ui') {
-        ensureLink('lib-mui-css', '/styles/mui.css');
-        removeLink('lib-bootstrap-css');
-      } else {
-        // tailwind: remove dynamic lib css
-        removeLink('lib-bootstrap-css');
-        removeLink('lib-mui-css');
-      }
+      // NOTE: We previously supported dynamic <link> insertion to load per-library CSS
+      // at runtime (Option 2). The project now uses global imports in `src/index.tsx`
+      // to include helper CSS for Bootstrap and MUI at build time (Option 1).
+      // Therefore we intentionally do NOT manage dynamic <link> tags here to avoid
+      // duplicate or flickering styles. We still expose the active library via
+      // the `data-libreria` attribute so CSS selectors using it continue to work.
     } catch (e) {
       // ignore in SSR or locked environments
     }
