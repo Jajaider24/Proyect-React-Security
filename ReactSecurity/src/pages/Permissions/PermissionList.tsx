@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import GenericTable from "../../components/GenericTable.tsx";
+import UI from "../../components/UI/index.tsx";
 import { permissionService } from "../../services/permissionService.ts";
 
 const ListPermissions: React.FC = () => {
@@ -73,11 +74,7 @@ const ListPermissions: React.FC = () => {
   const renderBotonCrear = () => {
     const onCrear = () => navigate("/permissions/create");
     return (
-      <button
-        type="button"
-        onClick={onCrear}
-        className="inline-flex items-center justify-center gap-2.5 rounded-md bg-primary py-3 px-6 text-center font-medium text-white hover:bg-opacity-90"
-      >
+      <UI.Button type="button" onClick={onCrear} variant="primary" className="inline-flex items-center justify-center gap-2.5 py-3 px-6">
         <svg
           className="fill-current"
           width="20"
@@ -90,7 +87,7 @@ const ListPermissions: React.FC = () => {
           <path d="M13.7501 9.3125H10.6876V6.25C10.6876 5.86875 10.3813 5.5625 10.0001 5.5625C9.61887 5.5625 9.31262 5.86875 9.31262 6.25V9.3125H6.25012C5.86887 9.3125 5.56262 9.61875 5.56262 10C5.56262 10.3813 5.86887 10.6875 6.25012 10.6875H9.31262V13.75C9.31262 14.1313 9.61887 14.4375 10.0001 14.4375C10.3813 14.4375 10.6876 14.1313 10.6876 13.75V10.6875H13.7501C14.1313 10.6875 14.4376 10.3813 14.4376 10C14.4376 9.61875 14.1313 9.3125 13.7501 9.3125Z" />
         </svg>
         Crear Permiso
-      </button>
+      </UI.Button>
     );
   };
 

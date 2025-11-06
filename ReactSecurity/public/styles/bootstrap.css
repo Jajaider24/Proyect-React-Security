@@ -1,5 +1,7 @@
-/* Bootstrap-specific theme variables and overrides
-   Loaded dynamically when user selects the 'bootstrap' library. */
+/* Public bootstrap.css copy for runtime loader
+   This is a copy of src/styles/Bootstrap/bootstrap.css so it can be loaded
+   dynamically from /styles/bootstrap.css at runtime via a <link> tag.
+*/
 
 html[data-libreria="bootstrap"] {
   --brand: #f59e0b; /* amber */
@@ -7,6 +9,5 @@ html[data-libreria="bootstrap"] {
   --brand-2: #92400e;
 }
 
-/* Small helpers that Bootstrap variant might use */
 .brand-bg { background-color: var(--brand) !important; color: var(--brand-contrast) !important; }
 .brand-border { border-color: var(--brand-2) !important; }

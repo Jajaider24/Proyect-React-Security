@@ -2,11 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dark mode readability overrides
-	 These provide higher-contrast colors for common text classes when
-	 the `dark` class is present on <html>. This is a stop-gap so the
-	 UI is readable immediately; for a long-term solution prefer using
-	 Tailwind's `dark:` variants or semantic utility classes. */
+/* Anulaciones de legibilidad del modo oscuro
+Estas anulaciones proporcionan colores de mayor contraste para las clases de texto comunes cuando
+la clase `dark` está presente en <html>. Esta es una solución provisional para que la
+interfaz de usuario sea legible de inmediato; para una solución a largo plazo, se recomienda usar
+las variantes `dark:` de Tailwind o las clases de utilidad semántica. */
 
 /* Prefer using semantic class `text-primary` across components; this
 	 rule ensures it becomes light in dark mode. */
@@ -77,6 +77,25 @@
 .dark .text-black2,
 .dark .text-black3 {
 	color: #f8fafc !important;
+}
+
+/* Branding variables default (Tailwind) - keep minimal defaults here. */
+:root {
+  --brand: #10b981; /* Tailwind emerald */
+  --brand-contrast: #ffffff;
+  --brand-2: #064e3b;
+}
+
+/* Small helper classes that use the brand variables */
+.brand-bg {
+	background-color: var(--brand) !important;
+	color: var(--brand-contrast) !important;
+}
+.brand-border {
+	border-color: var(--brand-2) !important;
+}
+.brand-text {
+	color: var(--brand) !important;
 }
 
 /* --- Custom UI helpers: buttons and small animations --- */
@@ -160,17 +179,19 @@
 }
 
 .btn-primary {
-	background-image: linear-gradient(90deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06));
+	/* Use brand color for primary action to make UI vibrant. */
+	background: linear-gradient(90deg, var(--brand), var(--brand-2));
+	color: var(--brand-contrast);
 	backdrop-filter: blur(6px);
-	border: 1px solid rgba(255,255,255,0.12);
-	box-shadow: 0 8px 30px rgba(12, 12, 30, 0.45);
+	border: 1px solid rgba(0,0,0,0.06);
+	box-shadow: 0 8px 30px rgba(12, 12, 30, 0.15);
 	transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
 }
 .btn-primary:hover {
 	transform: translateY(-3px) scale(1.02);
-	box-shadow: 0 18px 48px rgba(12,12,30,0.6);
-	background-image: linear-gradient(90deg, rgba(255,255,255,0.26), rgba(255,255,255,0.09));
-	border-color: rgba(255,255,255,0.18);
+	box-shadow: 0 18px 48px rgba(12,12,30,0.18);
+	filter: brightness(1.03);
+	border-color: rgba(0,0,0,0.08);
 }
 .btn-primary:active {
 	transform: translateY(0) scale(.995);
@@ -188,7 +209,7 @@
 .btn-social:hover {
 	background: rgba(255,255,255,0.09);
 	transform: translateY(-2px) scale(1.01);
-	box-shadow: 0 8px 24px rgba(12,12,30,0.35);
+	box-shadow: 0 8px 24px rgba(12,12,30,0.12);
 	border-color: rgba(255,255,255,0.14);
 }
 .btn-social:active {

@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import Swal from "sweetalert2";
-import { getErrorMessage } from "../../lib/errors.ts";
 import GenericTable from "../../components/GenericTable.tsx";
-import { securityQuestionService } from "../../services/securityQuestionService.ts";
+import UI from "../../components/UI/index.tsx";
+import { getErrorMessage } from "../../lib/errors.ts";
 import type { SecurityQuestion } from "../../models/SecurityQuestion.ts";
+import { securityQuestionService } from "../../services/securityQuestionService.ts";
 
 export default function SecurityQuestionsList() {
   const [items, setItems] = useState<SecurityQuestion[]>([]);
@@ -76,7 +77,7 @@ export default function SecurityQuestionsList() {
       <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
         <div className="py-6 px-4 md:px-6 xl:px-7.5 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-black dark:text-white">Security Questions</h2>
-          <button type="button" onClick={openCreate} className="inline-flex items-center justify-center gap-2.5 rounded-md bg-primary py-2.5 px-4 text-center font-medium text-white hover:bg-opacity-90">Crear</button>
+          <UI.Button type="button" onClick={openCreate} variant="primary" className="inline-flex items-center justify-center gap-2.5">Crear</UI.Button>
         </div>
         {error && <div className="px-6 pb-2 text-red-600 text-sm">{error}</div>}
         {loading && <div className="px-6 pb-4 text-gray-500 text-sm">Cargando...</div>}
@@ -97,15 +98,15 @@ export default function SecurityQuestionsList() {
             <form onSubmit={saveForm} className="space-y-4">
               <div>
                 <label className="block text-sm text-black mb-1 dark:text-white">Nombre</label>
-                <input name="name" value={String(form.name || "")} onChange={handleChange} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+                <UI.Input name="name" value={String(form.name || "")} onChange={handleChange} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
               </div>
               <div>
                 <label className="block text-sm text-black mb-1 dark:text-white">Descripción</label>
-                <input name="description" value={String(form.description || "")} onChange={handleChange} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+                <UI.Input name="description" value={String(form.description || "")} onChange={handleChange} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
               </div>
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={closeForm} className="rounded-md border border-stroke py-2 px-4 text-black hover:bg-gray-100 dark:border-strokedark dark:text-white">Cancelar</button>
-                <button type="submit" className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90">Guardar</button>
+                <UI.Button type="button" onClick={closeForm} variant="secondary" className="rounded-md">Cancelar</UI.Button>
+                <UI.Button type="submit" variant="primary" className="rounded-md">Guardar</UI.Button>
               </div>
             </form>
           </div>

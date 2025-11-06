@@ -1,23 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
-import { getErrorMessage } from "../../lib/errors.ts";
+import UI from "../../components/UI/index.tsx";
 import api from "../../interceptors/axiosInterceptor.ts";
-import { addressService } from "../../services/addressService.ts";
-import { profileService } from "../../services/profileService.ts";
-import { digitalSignatureService } from "../../services/digitalSignatureService.ts";
+import { getErrorMessage } from "../../lib/errors.ts";
 import type { Address } from "../../models/Address.ts";
-import type { Profile } from "../../models/Profile.ts";
 import type { Device } from "../../models/Device";
 import type { Password } from "../../models/Password";
+import type { Profile } from "../../models/Profile.ts";
 import type { Session } from "../../models/Session";
-import { deviceService } from "../../services/deviceService.ts";
-import { passwordService } from "../../services/passwordService.ts";
-import { sessionService } from "../../services/sessionService.ts";
-import { roleService } from "../../services/roleService.ts";
-import { userRoleService } from "../../services/userRolesService.ts";
-import { securityQuestionService } from "../../services/securityQuestionService.ts";
+import { addressService } from "../../services/addressService.ts";
 import { answerService } from "../../services/answerService.ts";
+import { deviceService } from "../../services/deviceService.ts";
+import { digitalSignatureService } from "../../services/digitalSignatureService.ts";
+import { passwordService } from "../../services/passwordService.ts";
+import { profileService } from "../../services/profileService.ts";
+import { roleService } from "../../services/roleService.ts";
+import { securityQuestionService } from "../../services/securityQuestionService.ts";
+import { sessionService } from "../../services/sessionService.ts";
+import { userRoleService } from "../../services/userRolesService.ts";
 import { userService } from "../../services/usersService.ts";
 
 type TabKey = "address" | "profile" | "signature" | "devices" | "passwords" | "sessions" | "roles" | "questions";
@@ -44,9 +45,9 @@ export default function UserDetail() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-black dark:text-white">Usuario #{userId}</h1>
-        <button onClick={() => navigate("/users")} className="rounded-md border border-stroke py-2 px-4 text-black hover:bg-gray-100 dark:border-strokedark dark:text-white">
+        <UI.Button onClick={() => navigate("/users")} variant="secondary" className="rounded-md">
           Volver
-        </button>
+        </UI.Button>
       </div>
 
       <div className="border-b border-stroke dark:border-strokedark">
@@ -177,7 +178,7 @@ function SecurityAnswersTab({ userId, readOnly }: { userId: number; readOnly?: b
               <div className="font-medium text-black dark:text-white">{q.name}</div>
               {q.description && <div className="text-xs text-gray-500 mb-2">{q.description}</div>}
               <div className="flex gap-3 items-center">
-                <input
+                <UI.Input
                   placeholder="Tu respuesta"
                   value={answersByQ[q.id]?.content || ""}
                   onChange={(e) => updateLocal(q.id, { content: e.target.value })}
@@ -186,11 +187,11 @@ function SecurityAnswersTab({ userId, readOnly }: { userId: number; readOnly?: b
                 />
                 {!readOnly && (
                   <>
-                    <button onClick={() => onSave(q.id)} disabled={savingId === q.id} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">
+                    <UI.Button onClick={() => onSave(q.id)} disabled={savingId === q.id} variant="primary" className="">
                       {savingId === q.id ? "Guardando..." : (answersByQ[q.id]?.id ? "Actualizar" : "Guardar")}
-                    </button>
+                    </UI.Button>
                     {answersByQ[q.id]?.id && (
-                      <button onClick={() => onDelete(q.id)} className="rounded-md border border-red-300 px-4 py-2 text-red-600 hover:bg-red-50">Eliminar</button>
+                      <UI.Button onClick={() => onDelete(q.id)} variant="danger" className="">Eliminar</UI.Button>
                     )}
                   </>
                 )}
@@ -276,25 +277,25 @@ function AddressTab({ userId, readOnly }: { userId: number; readOnly?: boolean }
       <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm text-black mb-1 dark:text-white">Street</label>
-          <input name="street" value={form.street || ""} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <UI.Input name="street" value={form.street || ""} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
         </div>
         <div>
           <label className="block text-sm text-black mb-1 dark:text-white">Number</label>
-          <input name="number" value={form.number || ""} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <UI.Input name="number" value={form.number || ""} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
         </div>
         <div>
           <label className="block text-sm text-black mb-1 dark:text-white">Latitude</label>
-          <input name="latitude" type="number" step="0.000001" value={(form.latitude ?? "") as any} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <UI.Input name="latitude" type="number" step="0.000001" value={(form.latitude ?? "") as any} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
         </div>
         <div>
           <label className="block text-sm text-black mb-1 dark:text-white">Longitude</label>
-          <input name="longitude" type="number" step="0.000001" value={(form.longitude ?? "") as any} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <UI.Input name="longitude" type="number" step="0.000001" value={(form.longitude ?? "") as any} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
         </div>
         {!readOnly && (
           <div className="md:col-span-2 flex justify-end gap-3 pt-2">
-            <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">
+            <UI.Button type="submit" disabled={saving} variant="primary" className="">
               {saving ? "Guardando..." : address?.id ? "Actualizar" : "Crear"}
-            </button>
+            </UI.Button>
           </div>
         )}
       </form>
@@ -369,7 +370,7 @@ function ProfileTab({ userId, readOnly }: { userId: number; readOnly?: boolean }
   <h3 className="text-lg font-semibold mb-4 text-black dark:text-white">Profile</h3>
 
       {/* Vista estilo wireframe */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start mb-6">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start mb-6">
         <div className="md:col-span-2 border border-stroke dark:border-strokedark rounded-md h-[320px] flex items-center justify-center bg-gray-50 dark:bg-gray-800">
           {currentImageUrl ? (
             <img src={currentImageUrl} alt="Profile" className="max-h-[300px] object-contain" />
@@ -397,16 +398,16 @@ function ProfileTab({ userId, readOnly }: { userId: number; readOnly?: boolean }
       </div>
 
       <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm text-black mb-1 dark:text-white">Phone</label>
-          <input value={phone} onChange={(e) => setPhone(e.target.value)} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
-        </div>
+          <div>
+            <label className="block text-sm text-black mb-1 dark:text-white">Phone</label>
+            <UI.Input value={phone} onChange={(e) => setPhone(e.target.value)} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+          </div>
         {/* La imagen se actualiza solo en Digital Signature. Aquí no hay input de archivo. */}
         {!readOnly && (
           <div className="md:col-span-2 flex justify-end gap-3 pt-2">
-            <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">
+            <UI.Button type="submit" disabled={saving} variant="primary" className="">
               {saving ? "Guardando..." : profile?.id ? "Actualizar" : "Crear"}
-            </button>
+            </UI.Button>
           </div>
         )}
       </form>
@@ -509,13 +510,13 @@ function SignatureTab({ userId, readOnly }: { userId: number; readOnly?: boolean
       <form onSubmit={onSubmit} className="grid grid-cols-1 gap-4">
         <div>
           <label className="block text-sm text-black mb-1 dark:text-white">Imagen</label>
-          <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <UI.Input type="file" accept="image/*" onChange={(e: any) => setFile(e.target.files?.[0] || null)} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
         </div>
         {!readOnly && (
           <div className="flex justify-end gap-3 pt-2">
-            <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">
+            <UI.Button type="submit" disabled={saving} variant="primary" className="">
               {saving ? "Guardando..." : signature?.id ? "Actualizar" : "Crear"}
-            </button>
+            </UI.Button>
           </div>
         )}
       </form>
@@ -614,11 +615,11 @@ function RolesTab({ userId, readOnly }: { userId: number; readOnly?: boolean }) 
               No hay roles disponibles. Crea roles en la sección <a className="text-primary underline" href="/roles">Roles</a>.
             </div>
           )}
-          <input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
-          <input type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <UI.Input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <UI.Input type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
           {!readOnly && (
             <div className="md:col-span-4 flex justify-end">
-              <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">{saving ? "Guardando..." : "Asignar"}</button>
+              <UI.Button type="submit" disabled={saving} variant="primary" className="">{saving ? "Guardando..." : "Asignar"}</UI.Button>
             </div>
           )}
         </form>
@@ -651,7 +652,7 @@ function RolesTab({ userId, readOnly }: { userId: number; readOnly?: boolean }) 
                     <td className="py-2 pr-4 text-black dark:text-white">{String(ur.endAt || "")}</td>
                     <td className="py-2 pr-4 text-right">
                       {!readOnly && (
-                        <button onClick={() => onDelete(ur.id)} className="rounded-md border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                        <UI.Button onClick={() => onDelete(ur.id)} variant="danger" className="">Eliminar</UI.Button>
                       )}
                     </td>
                   </tr>
@@ -736,12 +737,12 @@ function DevicesTab({ userId, readOnly }: { userId: number; readOnly?: boolean }
       <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark">
         <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Nuevo dispositivo</h3>
         <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <input placeholder="Name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
-          <input placeholder="IP" value={form.ip} onChange={(e) => setForm((p) => ({ ...p, ip: e.target.value }))} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
-          <input placeholder="Operating System" value={form.operatingSystem || ""} onChange={(e) => setForm((p) => ({ ...p, operatingSystem: e.target.value }))} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <UI.Input placeholder="Name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <UI.Input placeholder="IP" value={form.ip} onChange={(e) => setForm((p) => ({ ...p, ip: e.target.value }))} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <UI.Input placeholder="Operating System" value={form.operatingSystem || ""} onChange={(e) => setForm((p) => ({ ...p, operatingSystem: e.target.value }))} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
           {!readOnly && (
             <div className="md:col-span-3 flex justify-end">
-              <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">{saving ? "Guardando..." : "Crear"}</button>
+              <UI.Button type="submit" disabled={saving} variant="primary" className="">{saving ? "Guardando..." : "Crear"}</UI.Button>
             </div>
           )}
         </form>
@@ -774,7 +775,7 @@ function DevicesTab({ userId, readOnly }: { userId: number; readOnly?: boolean }
                     <td className="py-2 pr-4 text-black dark:text-white">{d.operatingSystem || ""}</td>
                     <td className="py-2 pr-4 text-right">
                       {!readOnly && (
-                        <button onClick={() => onDelete(d.id)} className="rounded-md border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                        <UI.Button onClick={() => onDelete(d.id)} variant="danger" className="">Eliminar</UI.Button>
                       )}
                     </td>
                   </tr>
@@ -876,12 +877,12 @@ function PasswordsTab({ userId, readOnly }: { userId: number; readOnly?: boolean
       <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark">
         <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Nueva contraseña</h3>
         <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <input placeholder="Content" value={content} onChange={(e) => setContent(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
-          <input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
-          <input type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <UI.Input placeholder="Content" value={content} onChange={(e) => setContent(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <UI.Input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <UI.Input type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
           {!readOnly && (
             <div className="md:col-span-4 flex justify-end">
-              <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">{saving ? "Guardando..." : "Crear"}</button>
+              <UI.Button type="submit" disabled={saving} variant="primary" className="">{saving ? "Guardando..." : "Crear"}</UI.Button>
             </div>
           )}
         </form>
@@ -914,7 +915,7 @@ function PasswordsTab({ userId, readOnly }: { userId: number; readOnly?: boolean
                     <td className="py-2 pr-4 text-black dark:text-white">{String((p as any).endAt || (p as any).endsAt || "")}</td>
                     <td className="py-2 pr-4 text-right">
                       {!readOnly && (
-                        <button onClick={() => onDelete(p.id)} className="rounded-md border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                        <UI.Button onClick={() => onDelete(p.id)} variant="danger" className="">Eliminar</UI.Button>
                       )}
                     </td>
                   </tr>
@@ -1001,16 +1002,16 @@ function SessionsTab({ userId, readOnly }: { userId: number; readOnly?: boolean 
       <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark">
         <h3 className="text-lg font-semibold mb-3 text-black dark:text-white">Nueva sesión</h3>
         <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-5 gap-3">
-          <input placeholder="Token (opcional)" value={token} onChange={(e) => setToken(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
-          <input type="datetime-local" value={expiration} onChange={(e) => setExpiration(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
-          <input placeholder="FA Code" value={faCode} onChange={(e) => setFaCode(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <UI.Input placeholder="Token (opcional)" value={token} onChange={(e) => setToken(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <UI.Input type="datetime-local" value={expiration} onChange={(e) => setExpiration(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <UI.Input placeholder="FA Code" value={faCode} onChange={(e) => setFaCode(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white" />
           <select value={state} onChange={(e) => setState(e.target.value)} disabled={readOnly} className="rounded border border-stroke py-2 px-3 dark:border-strokedark dark:bg-form-input dark:text-white">
             <option value="active">active</option>
             <option value="inactive">inactive</option>
           </select>
           {!readOnly && (
             <div className="md:col-span-5 flex justify-end">
-              <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">{saving ? "Guardando..." : "Crear"}</button>
+              <UI.Button type="submit" disabled={saving} variant="primary" className="">{saving ? "Guardando..." : "Crear"}</UI.Button>
             </div>
           )}
         </form>
@@ -1045,7 +1046,7 @@ function SessionsTab({ userId, readOnly }: { userId: number; readOnly?: boolean 
                     <td className="py-2 pr-4 text-black dark:text-white">{s.state}</td>
                     <td className="py-2 pr-4 text-right">
                       {!readOnly && (
-                        <button onClick={() => onDelete(s.id)} className="rounded-md border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                        <UI.Button onClick={() => onDelete(s.id)} variant="danger" className="">Eliminar</UI.Button>
                       )}
                     </td>
                   </tr>

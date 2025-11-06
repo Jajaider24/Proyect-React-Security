@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import Swal from "sweetalert2";
-import { permissionService, type Permission } from "../../services/permissionService.ts";
 import { useNavigate, useParams } from "react-router-dom";
+import Swal from "sweetalert2";
+import UI from "../../components/UI/index.tsx";
+import { permissionService, type Permission } from "../../services/permissionService.ts";
 
 const UpdatePermission: React.FC = () => {
   const [form, setForm] = useState<Permission | null>(null);
@@ -98,8 +99,8 @@ const UpdatePermission: React.FC = () => {
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
-          <button type="button" onClick={() => navigate("/permissions")} className="rounded-md border border-stroke py-2 px-4 text-black hover:bg-gray-100 dark:border-strokedark dark:text-white">Cancelar</button>
-          <button type="submit" disabled={saving} className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 disabled:opacity-60">{saving ? "Guardando..." : "Guardar"}</button>
+          <UI.Button type="button" variant="secondary" onClick={() => navigate("/permissions")} className="rounded-md">Cancelar</UI.Button>
+          <UI.Button type="submit" variant="primary" disabled={saving}>{saving ? "Guardando..." : "Guardar"}</UI.Button>
         </div>
       </form>
     </div>

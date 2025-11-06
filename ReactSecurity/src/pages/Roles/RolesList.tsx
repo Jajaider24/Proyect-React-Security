@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Swal from "sweetalert2";
-import { getErrorMessage } from "../../lib/errors.ts";
 import GenericTable from "../../components/GenericTable.tsx";
-import { roleService } from "../../services/roleService.ts";
+import UI from "../../components/UI/index.tsx";
+import { getErrorMessage } from "../../lib/errors.ts";
 import type { Role } from "../../models/Role.ts";
 import { permissionService, type Permission } from "../../services/permissionService.ts";
 import { rolePermissionService } from "../../services/rolePermissionService.ts";
+import { roleService } from "../../services/roleService.ts";
 
 export default function RolesList() {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -152,14 +153,14 @@ export default function RolesList() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+      <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark flex flex-col min-h-0">
         <div className="py-6 px-4 md:px-6 xl:px-7.5 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-black dark:text-white">Roles</h2>
-          <button type="button" onClick={openCreate} className="inline-flex items-center justify-center gap-2.5 rounded-md bg-primary py-2.5 px-4 text-center font-medium text-white hover:bg-opacity-90">Crear Rol</button>
+          <UI.Button type="button" onClick={openCreate} variant="primary" className="inline-flex items-center justify-center gap-2.5">Crear Rol</UI.Button>
         </div>
         {error && <div className="px-6 pb-2 text-red-600 text-sm">{error}</div>}
         {loading && <div className="px-6 pb-4 text-gray-500 text-sm">Cargando...</div>}
-        <div className="px-4 md:px-6 xl:px-7.5 pb-6">
+        <div className="px-4 md:px-6 xl:px-7.5 pb-6 flex-1 min-h-0 overflow-auto">
           <GenericTable<Role>
             data={roles}
             columns={["id", "name", "description"] as any}
@@ -180,15 +181,15 @@ export default function RolesList() {
             <form onSubmit={saveForm} className="space-y-4">
               <div>
                 <label className="block text-sm text-black mb-1 dark:text-white">Nombre</label>
-                <input name="name" value={(form as any).name || ""} onChange={handleChange} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+                <UI.Input name="name" value={(form as any).name || ""} onChange={handleChange} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
               </div>
               <div>
                 <label className="block text-sm text-black mb-1 dark:text-white">Descripción</label>
-                <input name="description" value={(form as any).description || ""} onChange={handleChange} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+                <UI.Input name="description" value={(form as any).description || ""} onChange={handleChange} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
               </div>
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={closeForm} className="rounded-md border border-stroke py-2 px-4 text-black hover:bg-gray-100 dark:border-strokedark dark:text-white">Cancelar</button>
-                <button type="submit" className="rounded-md bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90">Guardar</button>
+                <UI.Button type="button" onClick={closeForm} variant="secondary" className="rounded-md">Cancelar</UI.Button>
+                <UI.Button type="submit" variant="primary" className="rounded-md">Guardar</UI.Button>
               </div>
             </form>
           </div>

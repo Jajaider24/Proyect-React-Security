@@ -2,6 +2,8 @@
 
 import React from "react";
 import useTheme from "../hooks/useTheme.ts";
+import { useLibreria } from "./context/LibreriaContext.tsx";
+import UI from "./UI/index.tsx";
 
 interface HeaderProps {
   title: string;
@@ -15,29 +17,9 @@ interface HeaderProps {
 export function Header({ title, onCreate, onList, onLogout, onChangeView }: HeaderProps) {
   return (
     <header className="flex items-center justify-between px-6 py-4 bg-white shadow-md border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-      <h1 className="text-2xl font-semibold text-primary">{title}</h1>
+      <h1 className="text-2xl font-semibold" style={{ color: 'var(--brand)' }}>{title}</h1>
 
       <div className="flex items-center gap-3">
-        <HeaderButton
-          onClick={() => {
-            onCreate?.();
-            onChangeView?.("crear");
-          }}
-          variant="primary"
-        >
-          Crear solicitud
-        </HeaderButton>
-
-        <HeaderButton
-          onClick={() => {
-            onList?.();
-            onChangeView?.("listar");
-          }}
-          variant="secondary"
-        >
-          Mis solicitudes
-        </HeaderButton>
-
         <HeaderButton
           onClick={() => {
             onLogout?.();
@@ -46,6 +28,7 @@ export function Header({ title, onCreate, onList, onLogout, onChangeView }: Head
         >
           Cerrar sesión
         </HeaderButton>
+
         {/* UI dropdown (Tailwind / Material UI / Bootstrap) */}
         <UIDropdown />
 
@@ -60,10 +43,11 @@ function UIDropdown() {
   const [open, setOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const buttonRef = React.useRef<HTMLButtonElement | null>(null);
+  const { libreria, setLibreria } = useLibreria();
   const items = [
-    { id: "tailwind", label: "Tailwind" },
-    { id: "mui", label: "Material UI" },
-    { id: "bootstrap", label: "Bootstrap" },
+    { id: "tailwind", label: "Tailwind", color: '#10b981' },
+    { id: "ui", label: "Material UI", color: '#2563eb' },
+    { id: "bootstrap", label: "Bootstrap", color: '#f59e0b' },
   ];
   const itemRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
   const [focusIndex, setFocusIndex] = React.useState<number>(-1);
@@ -147,12 +131,17 @@ function UIDropdown() {
         ref={buttonRef}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onButtonKeyDown}
-        className="px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:opacity-90 transition-colors focus:outline-none"
+        className="flex items-center gap-2 px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:opacity-90 transition-colors focus:outline-none shadow-sm border border-gray-200 dark:border-gray-700"
         aria-haspopup="menu"
         aria-expanded={open}
         title="UI libraries"
       >
-        UI
+        <span className="text-sm font-medium">
+          {items.find((it) => it.id === libreria)?.label ?? "UI"}
+        </span>
+        <svg className="w-4 h-4 opacity-70" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+          <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </button>
 
       {open && (
@@ -171,13 +160,24 @@ function UIDropdown() {
                     itemRefs.current[i] = el;
                   }) as React.Ref<HTMLButtonElement>}
                   onClick={() => {
-                    console.log(`${it.label} clicked (no action)`);
+                    setLibreria(it.id as any);
                     setOpen(false);
                   }}
                   tabIndex={-1}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  aria-current={libreria === (it.id as any) ? "true" : undefined}
+                  className={`w-full text-left px-4 py-2 text-sm dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between ${
+                    libreria === (it.id as any) ? "bg-gray-100 dark:bg-gray-700 font-semibold" : ""
+                  }`}
                 >
-                  {it.label}
+                  <div className="flex items-center gap-3">
+                    <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: it.color }} aria-hidden></span>
+                    <span>{it.label}</span>
+                  </div>
+                  {libreria === (it.id as any) && (
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                      <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
                 </button>
               </li>
             ))}
@@ -258,8 +258,8 @@ function HeaderButton({ onClick, children, variant }: HeaderButtonProps) {
   };
 
   return (
-    <button onClick={onClick} className={`${baseStyles} ${variants[variant]}`}>
+    <UI.Button onClick={onClick} variant={variant} className={baseStyles + " " + variants[variant]}>
       {children}
-    </button>
+    </UI.Button>
   );
 }

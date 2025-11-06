@@ -1,5 +1,6 @@
-/* Material-UI (ui) theme variables and helpers
-   Loaded dynamically when user selects the 'ui' library. */
+/* Public mui.css copy for runtime loader
+   Copy of src/styles/MaterialUI/mui.css
+*/
 
 html[data-libreria="ui"] {
   --brand: #2563eb; /* blue-600 */
