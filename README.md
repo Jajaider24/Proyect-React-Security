@@ -86,16 +86,4 @@ Paso: Instalar: "npm install @mui/material @emotion/react @emotion/styled @mui/i
 cd .\ReactSecurity
 npm start
 
-lol
 
-## Cambios aplicados por el asistente
-
-- Se instalaron las siguientes dependencias (si no las tenías ya):
-
-  - `@mui/material`, `@emotion/react`, `@emotion/styled`, `@mui/icons-material` (Material UI v5).
-  - `formik`, `yup` (formularios y validación).
-
-- Se corrigió un error de ejecución al cargar la página `/demo` (404 en `/api/users`).
-  - Si no existe una API configurada mediante la variable de entorno `REACT_APP_API_URL`, el servicio de usuarios ahora usa un mock en memoria (`src/services/usersService.ts`) que expone las mismas funciones (getUsers, createUser, updateUser, deleteUser, createUserWithRoles). Esto permite ejecutar y probar la UI sin un backend.
-
-Nota: Si tienes una API real, establece `REACT_APP_API_URL` en `.env` (por ejemplo `REACT_APP_API_URL=https://api.miapp.com`) para que las llamadas HTTP apunten al backend en vez del mock.
