@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
-import UI from "../../components/UI/index.tsx";
 import GenericTable from "../../components/GenericTable.tsx";
+import AddressMap from "../../components/Map/AddressMap.tsx";
+import UI from "../../components/UI/index.tsx";
 import api from "../../interceptors/axiosInterceptor.ts";
 import { getErrorMessage } from "../../lib/errors.ts";
 import type { Address } from "../../models/Address.ts";
@@ -21,7 +22,6 @@ import { securityQuestionService } from "../../services/securityQuestionService.
 import { sessionService } from "../../services/sessionService.ts";
 import { userRoleService } from "../../services/userRolesService.ts";
 import { userService } from "../../services/usersService.ts";
-import AddressMap from "../../components/Map/AddressMap.tsx";
 
 type TabKey = "address" | "profile" | "signature" | "devices" | "passwords" | "sessions" | "roles" | "questions";
 
@@ -325,16 +325,23 @@ function ProfileTab({ userId, readOnly }: { userId: number; readOnly?: boolean }
   const [signature, setSignature] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [profileFile, setProfileFile] = useState<File | null>(null);
+  const [profilePreviewUrl, setProfilePreviewUrl] = useState<string | null>(null);
   const API_BASE: string = (api as any)?.defaults?.baseURL || "";
 
-  // La imagen de Profile debe COINCIDIR con la de Digital Signature
-  const currentImageUrl = (() => {
-    const raw = (signature as any)?.photo as string | undefined;
-    if (!raw) return null;
-    const base = String(raw).split(/[/\\]/).pop();
-    if (!base) return null;
-    return `${API_BASE}/api/digital-signatures/${base}`;
-  })();
+    // Preferir la foto del perfil (`profile.photo`) y sólo como fallback usar la firma (si así lo desea el negocio)
+    const currentImageUrl = (() => {
+      const profileRaw = profile?.photo as string | undefined;
+      if (profileRaw) {
+        const base = String(profileRaw).split(/[/\\]/).pop();
+        if (base) return `${API_BASE}/api/profiles/${base}`;
+      }
+      const sigRaw = (signature as any)?.photo as string | undefined;
+      if (!sigRaw) return null;
+      const base = String(sigRaw).split(/[/\\]/).pop();
+      if (!base) return null;
+      return `${API_BASE}/api/digital-signatures/${base}`;
+    })();
 
   useEffect(() => {
     (async () => {
@@ -361,15 +368,18 @@ function ProfileTab({ userId, readOnly }: { userId: number; readOnly?: boolean }
     e.preventDefault();
     try {
       setSaving(true);
+      // enviar photo si se seleccionó archivo
       if (profile?.id) {
-        const updated = await profileService.updateProfile(profile.id, { phone: phone?.trim(), photo: null });
+        const updated = await profileService.updateProfile(profile.id, { phone: phone?.trim(), photo: profileFile });
         setProfile(updated);
         Swal.fire("Actualizado", "Perfil actualizado", "success");
       } else {
-        const created = await profileService.createProfile(userId, { phone: phone?.trim(), photo: null });
+        const created = await profileService.createProfile(userId, { phone: phone?.trim(), photo: profileFile });
         setProfile(created);
         Swal.fire("Creado", "Perfil creado", "success");
       }
+      // limpiar control de archivo local
+      setProfileFile(null);
     } catch (err: any) {
       const message = getErrorMessage(err) || "Error guardando perfil";
       Swal.fire("Error", message, "error");
@@ -377,6 +387,20 @@ function ProfileTab({ userId, readOnly }: { userId: number; readOnly?: boolean }
       setSaving(false);
     }
   };
+
+  useEffect(() => {
+    // generar preview temporal cuando se selecciona profileFile
+    if (!profileFile) {
+      setProfilePreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(profileFile);
+    setProfilePreviewUrl(url);
+    return () => {
+      URL.revokeObjectURL(url);
+      setProfilePreviewUrl(null);
+    };
+  }, [profileFile]);
 
   if (loading) return <div className="text-gray-500">Cargando...</div>;
 
@@ -387,8 +411,8 @@ function ProfileTab({ userId, readOnly }: { userId: number; readOnly?: boolean }
       {/* Vista estilo wireframe */}
   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start mb-6">
         <div className="md:col-span-2 border border-stroke dark:border-strokedark rounded-md h-[320px] flex items-center justify-center bg-gray-50 dark:bg-gray-800">
-          {currentImageUrl ? (
-            <img src={currentImageUrl} alt="Profile" className="max-h-[300px] object-contain" />
+          {profilePreviewUrl || currentImageUrl ? (
+            <img src={profilePreviewUrl || currentImageUrl!} alt="Profile" className="max-h-[300px] object-contain" />
           ) : (
             <div className="w-[260px] h-[260px] border-2 border-dashed border-gray-300 dark:border-gray-600 relative">
               <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">Sin foto</div>
@@ -417,7 +441,11 @@ function ProfileTab({ userId, readOnly }: { userId: number; readOnly?: boolean }
             <label className="block text-sm text-black mb-1 dark:text-white">Phone</label>
             <UI.Input value={phone} onChange={(e) => setPhone(e.target.value)} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
           </div>
-        {/* La imagen se actualiza solo en Digital Signature. Aquí no hay input de archivo. */}
+        {/* Ahora la imagen del perfil se puede actualizar aquí (archivo independiente de la firma digital) */}
+        <div>
+          <label className="block text-sm text-black mb-1 dark:text-white">Foto de perfil</label>
+          <UI.Input type="file" accept="image/*" onChange={(e: any) => setProfileFile(e.target.files?.[0] || null)} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+        </div>
         {!readOnly && (
           <div className="md:col-span-2 flex justify-end gap-3 pt-2">
             <UI.Button type="submit" disabled={saving} variant="primary" className="">

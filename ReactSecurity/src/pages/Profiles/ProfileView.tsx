@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import api from "../../interceptors/axiosInterceptor.ts";
-import { userService } from "../../services/usersService.ts";
-import { profileService } from "../../services/profileService.ts";
 import { digitalSignatureService } from "../../services/digitalSignatureService.ts";
+import { profileService } from "../../services/profileService.ts";
+import { userService } from "../../services/usersService.ts";
 
 type UserLite = { id?: number; name?: string; email?: string };
 type ProfileLite = { id?: number; user_id?: number; phone?: string | null; photo?: string | null };
@@ -50,14 +50,19 @@ export default function ProfileView() {
   }, [userId, navigate]);
 
   const imageUrl = useMemo(() => {
-    // La imagen del perfil debe coincidir con la firma
+    // Preferir la foto del perfil (`profile.photo`) y sólo como fallback la firma
     const baseURL: string = (api as any)?.defaults?.baseURL || "";
+    const profRaw = profile?.photo as string | undefined;
+    if (profRaw) {
+      const f = String(profRaw).split(/[/\\]/).pop();
+      if (f) return `${baseURL}/api/profiles/${f}`;
+    }
     const raw = (signature as any)?.photo as string | undefined;
     if (!raw) return null;
     const filename = String(raw).split(/[/\\]/).pop();
     if (!filename) return null;
     return `${baseURL}/api/digital-signatures/${filename}`;
-  }, [signature]);
+  }, [profile, signature]);
 
   if (loading) return <div className="p-6 text-gray-600">Cargando...</div>;
 

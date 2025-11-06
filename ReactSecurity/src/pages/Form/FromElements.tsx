@@ -1,4 +1,4 @@
-import Breadcrumb from '../../components/breadCrumb';
+import Breadcrumb from '../../components/BreadCrumb.tsx';
 import CheckboxFive from '../../components/CheckboxFive.tsx';
 import CheckboxFour from '../../components/CheckboxFour.tsx';
 import CheckboxOne from '../../components/CheckboxOne.tsx';
