@@ -82,6 +82,8 @@ Paso: Instalar: "npm install yup formik --save"
 
 Paso: Instalar: "npm install @mui/material @emotion/react @emotion/styled @mui/icons-material formik yup"
 
+Paso: Istalar: npm install leaflet react-leaflet
+
 #Este proyecto se ejecuta de la siguiente manera:
 cd .\ReactSecurity
 npm start

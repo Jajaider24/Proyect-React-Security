@@ -21,6 +21,7 @@ import { securityQuestionService } from "../../services/securityQuestionService.
 import { sessionService } from "../../services/sessionService.ts";
 import { userRoleService } from "../../services/userRolesService.ts";
 import { userService } from "../../services/usersService.ts";
+import AddressMap from "../../components/Map/AddressMap.tsx";
 
 type TabKey = "address" | "profile" | "signature" | "devices" | "passwords" | "sessions" | "roles" | "questions";
 
@@ -275,31 +276,44 @@ function AddressTab({ userId, readOnly }: { userId: number; readOnly?: boolean }
   return (
     <div className="rounded-sm border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
       <h3 className="text-lg font-semibold mb-4 text-black dark:text-white">Address</h3>
-      <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm text-black mb-1 dark:text-white">Street</label>
-          <UI.Input name="street" value={form.street || ""} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+          <AddressMap
+            value={form.latitude != null && form.longitude != null ? { lat: Number(form.latitude), lng: Number(form.longitude) } : null}
+            onChange={(p) => setForm((prev) => ({ ...prev, latitude: p?.lat, longitude: p?.lng }))}
+            readOnly={readOnly}
+            height={360}
+          />
+          {!readOnly && (
+            <p className="text-xs text-gray-500 mt-2">Sugerencia: haz clic en el mapa o arrastra el marcador para establecer coordenadas.</p>
+          )}
         </div>
-        <div>
-          <label className="block text-sm text-black mb-1 dark:text-white">Number</label>
-          <UI.Input name="number" value={form.number || ""} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
-        </div>
-        <div>
-          <label className="block text-sm text-black mb-1 dark:text-white">Latitude</label>
-          <UI.Input name="latitude" type="number" step="0.000001" value={(form.latitude ?? "") as any} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
-        </div>
-        <div>
-          <label className="block text-sm text-black mb-1 dark:text-white">Longitude</label>
-          <UI.Input name="longitude" type="number" step="0.000001" value={(form.longitude ?? "") as any} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
-        </div>
-        {!readOnly && (
-          <div className="md:col-span-2 flex justify-end gap-3 pt-2">
-            <UI.Button type="submit" disabled={saving} variant="primary" className="">
-              {saving ? "Guardando..." : address?.id ? "Actualizar" : "Crear"}
-            </UI.Button>
+        <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm text-black mb-1 dark:text-white">Street</label>
+            <UI.Input name="street" value={form.street || ""} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
           </div>
-        )}
-      </form>
+          <div>
+            <label className="block text-sm text-black mb-1 dark:text-white">Number</label>
+            <UI.Input name="number" value={form.number || ""} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+          </div>
+          <div>
+            <label className="block text-sm text-black mb-1 dark:text-white">Latitude</label>
+            <UI.Input name="latitude" type="number" step="0.000001" value={(form.latitude ?? "") as any} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+          </div>
+          <div>
+            <label className="block text-sm text-black mb-1 dark:text-white">Longitude</label>
+            <UI.Input name="longitude" type="number" step="0.000001" value={(form.longitude ?? "") as any} onChange={onChange} disabled={readOnly} className="w-full rounded border border-stroke py-2 px-3 outline-none focus:border-primary dark:border-strokedark dark:bg-form-input dark:text-white" />
+          </div>
+          {!readOnly && (
+            <div className="md:col-span-2 flex justify-end gap-3 pt-2">
+              <UI.Button type="submit" disabled={saving} variant="primary" className="">
+                {saving ? "Guardando..." : address?.id ? "Actualizar" : "Crear"}
+              </UI.Button>
+            </div>
+          )}
+        </form>
+      </div>
     </div>
   );
 }

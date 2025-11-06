@@ -7,6 +7,10 @@ import './index.css';
 import { LibreriaProvider } from "./components/context/LibreriaContext.tsx";
 import './styles/Bootstrap/bootstrap.css';
 import './styles/MaterialUI/mui.css';
+// Leaflet CSS para mapas
+import 'leaflet/dist/leaflet.css';
+// Fix de iconos por defecto de Leaflet (rutas de imágenes en bundlers)
+import './lib/leafletIcons.ts';
 
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

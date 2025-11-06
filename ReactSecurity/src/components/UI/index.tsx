@@ -2,6 +2,7 @@ import React from "react";
 import { useLibreria } from "../context/LibreriaContext.tsx";
 // MUI imports (ok if available in the project)
 import MuiButton from "@mui/material/Button";
+import 'leaflet/dist/leaflet.css';
 
 type ButtonVariant = "primary" | "secondary" | "danger" | "text";
 
