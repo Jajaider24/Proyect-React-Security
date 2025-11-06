@@ -41,6 +41,44 @@
 	background-color: #111827 !important; /* gray-900 */
 }
 
+/* Form controls and buttons: ensure readable backgrounds and text in dark mode.
+	 These rules are intentionally a bit broad to catch inputs/buttons that lack
+	 dark: variants. We use !important to override inline Tailwind utilities when needed. */
+.dark input,
+.dark textarea,
+.dark select,
+.dark .form-control,
+.dark button,
+.dark .btn,
+.dark .btn-primary,
+.dark .btn-social {
+	background-color: #0b1220 !important; /* very dark */
+	color: #e5e7eb !important; /* gray-200 */
+	border-color: rgba(255,255,255,0.06) !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+	color: #9ca3af !important; /* gray-400 */
+}
+
+/* Make common light gray background utilities darker in dark mode so text remains visible */
+.dark .bg-gray-100,
+.dark .bg-gray-200,
+.dark .bg-gray-300,
+.dark .bg-gray-400,
+.dark .bg-white {
+	background-color: #0f1724 !important; /* dark slate */
+}
+
+/* Ensure text that was black becomes light in dark mode */
+.dark .text-black,
+.dark .text-black1,
+.dark .text-black2,
+.dark .text-black3 {
+	color: #f8fafc !important;
+}
+
 /* --- Custom UI helpers: buttons and small animations --- */
 @keyframes popIn {
 	from {
